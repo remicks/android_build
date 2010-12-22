@@ -60,9 +60,6 @@ Usage:  ota_from_target_files [flags] input_target_files output_ota_package
   --override_device <device>
       Override device-specific asserts. Can be a comma-separated list.
 
-  --persist <true|false>
-      Specify whether to enable persistence across installs (on by default).
-
   --no_assert <true|false>
       Including this will turn device asserts off.
 
@@ -73,6 +70,10 @@ Usage:  ota_from_target_files [flags] input_target_files output_ota_package
   --no_separate_recovery <boolean>
       Do not generate recovery image. For devices which do not have a truly
       separate recovery partition.
+
+  --backup <boolean>
+      Enable or disable the execution of backuptool.sh.
+      Disabled by default.
 
 """
 
@@ -110,9 +111,8 @@ OPTIONS.omit_prereq = False
 OPTIONS.extra_script = None
 OPTIONS.aslr_mode = True
 OPTIONS.worker_threads = 3
-OPTIONS.two_step = False
+OPTIONS.backuptool = False
 OPTIONS.override_device = 'auto'
-OPTIONS.persist = True
 OPTIONS.no_assert = False
 OPTIONS.override_prop = False
 OPTIONS.no_separate_recovery = False
@@ -521,7 +521,8 @@ else if get_stage("%(bcb_dev)s", "stage") == "3/3" then
 
   device_specific.FullOTA_InstallBegin()
 
-  CopyInstallTools(output_zip)
+  if OPTIONS.backuptool:
+    script.RunBackup("backup")
 
   script.ShowProgress(0.5, 0)
 
@@ -530,11 +531,6 @@ else if get_stage("%(bcb_dev)s", "stage") == "3/3" then
 
   if "selinux_fc" in OPTIONS.info_dict:
     WritePolicyConfig(OPTIONS.info_dict["selinux_fc"], output_zip)
-
-  if OPTIONS.persist:
-    script.Mount("/system")
-    script.RunPersist("save")
-    script.Unmount("/system")
 
   script.FormatPartition("/system")
   script.Mount("/system")
@@ -553,13 +549,13 @@ else if get_stage("%(bcb_dev)s", "stage") == "3/3" then
   Item.GetMetadata(input_zip)
   Item.Get("system").SetPermissions(script)
 
-  if OPTIONS.persist:
-    script.ShowProgress(0.2, 10)
-    script.RunPersist("restore")
-
   common.CheckSize(boot_img.data, "boot.img", OPTIONS.info_dict)
   common.ZipWriteStr(output_zip, "boot.img", boot_img.data)
   script.ShowProgress(0.2, 0)
+
+  if OPTIONS.backuptool:
+    script.ShowProgress(0.2, 10)
+    script.RunBackup("restore")
 
   script.ShowProgress(0.2, 10)
   script.WriteRawImage("/boot", "boot.img")
@@ -1041,14 +1037,12 @@ def main(argv):
       OPTIONS.two_step = True
     elif o in ("--override_device"):
       OPTIONS.override_device = a
-    elif o in ("--persist"):
-      OPTIONS.persist = a
     elif o in ("--worker_threads"):
       OPTIONS.worker_threads = int(a)
     elif o in ("--override_prop"):
       OPTIONS.override_prop = bool(a.lower() == 'true')
-    elif o in ("--no_separate_recovery"):
-      OPTIONS.no_separate_recovery = bool(a.lower() == 'true')
+    elif o in ("--backup"):
+      OPTIONS.backuptool = bool(a.lower() == 'true')
     else:
       return False
     return True
@@ -1064,11 +1058,10 @@ def main(argv):
                                               "extra_script=",
                                               "worker_threads=",
                                               "aslr_mode=",
-                                              "two_step",
+                                              "backup=",
                                               "override_device=",
-                                              "persist=",
-                                              "override_prop=",
-                                              "no_separate_recovery="],
+                                              "override_prop="],
+                                              ],
                              extra_option_handler=option_handler)
 
   if len(args) != 2:

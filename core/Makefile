@@ -1415,16 +1415,16 @@ else
     $(INTERNAL_OTA_PACKAGE_TARGET): skip_assert := false
 endif
 
-ifeq ($(TARGET_DISABLE_PERSIST),true)
-    $(INTERNAL_OTA_PACKAGE_TARGET): persist := false
-else
-    $(INTERNAL_OTA_PACKAGE_TARGET): persist := true
-endif
-
 ifeq ($(TARGET_UNIFIED_DEVICE),)
     $(INTERNAL_OTA_PACKAGE_TARGET): override_prop := false
 else
     $(INTERNAL_OTA_PACKAGE_TARGET): override_prop := true
+endif
+
+ifeq ($(PLAIN_BUILD),true)
+    $(INTERNAL_OTA_PACKAGE_TARGET): backuptool := true
+else
+    $(INTERNAL_OTA_PACKAGE_TARGET): backuptool := false
 endif
 
 ifneq ($(TARGET_NO_SEPARATE_RECOVERY),)
@@ -1437,8 +1437,7 @@ $(INTERNAL_OTA_PACKAGE_TARGET): $(BUILT_TARGET_FILES_PACKAGE) $(DISTTOOLS)
 	$(OTA_FROM_TARGET_SCRIPT) -v \
 	   -p $(HOST_OUT) \
 	   -k $(KEY_CERT_PAIR) \
-	   --no_assert=$(skip_assert) \
-	   --persist=$(persist) \
+	   --backup=$(backuptool) \
 	   --override_device=$(override_device) \
 	   --override_prop=$(override_prop) \
 	   $(separate_recovery) \
