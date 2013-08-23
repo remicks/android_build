@@ -13,6 +13,7 @@ Invoke ". build/envsetup.sh" from your shell to add the following functions to y
 - jgrep:   Greps on all local Java files.
 - resgrep: Greps on all local res/*.xml files.
 - godir:   Go to the directory containing a file.
+- pushboot:Push a file from your OUT dir to your phone and reboots it, using absolute path.
 
 Look at the source to view more functions. The complete list is:
 EOF
@@ -57,6 +58,14 @@ function check_product()
         echo "Couldn't locate the top of the tree.  Try setting TOP." >&2
         return
     fi
+
+    if (echo -n $1 | grep -q -e "^illusion_") ; then
+       CUSTOM_BUILD=$(echo -n $1 | sed -e 's/^illusion_//g')
+    else
+       CUSTOM_BUILD=
+    fi
+    export CUSTOM_BUILD
+
     CALLED_FROM_SETUP=true BUILD_SYSTEM=build/core \
         TARGET_PRODUCT=$1 \
         TARGET_BUILD_VARIANT= \
@@ -450,6 +459,49 @@ function print_lunch_menu()
     echo
 }
 
+function brunch()
+{
+    breakfast $*
+    if [ $? -eq 0 ]; then
+        time mka bacon
+    else
+        echo "No such item in brunch menu. Try 'breakfast'"
+        return 1
+    fi
+    return $?
+}
+
+function breakfast()
+{
+    target=$1
+    CUSTOM_DEVICES_ONLY="true"
+    unset LUNCH_MENU_CHOICES
+    add_lunch_combo full-eng
+    for f in `/bin/ls vendor/illusion/vendorsetup.sh 2> /dev/null`
+        do
+            echo "including $f"
+            . $f
+        done
+    unset f
+
+    if [ $# -eq 0 ]; then
+        # No arguments, so let's have the full menu
+        lunch
+    else
+        echo "z$target" | grep -q "-"
+        if [ $? -eq 0 ]; then
+            # A buildtype was specified, assume a full device name
+            lunch $target
+        else
+            # This is probably just the illusion model name
+            lunch illusion_$target-userdebug
+        fi
+    fi
+    return $?
+}
+
+alias bib=breakfast
+
 function lunch()
 {
     local answer
@@ -491,6 +543,20 @@ function lunch()
     check_product $product
     if [ $? -ne 0 ]
     then
+        # if we can't find the product, try to grab it from our github
+        T=$(gettop)
+        pushd $T > /dev/null
+        build/tools/roomservice.py $product
+        popd > /dev/null
+        check_product $product
+    else
+        T=$(gettop)
+        pushd $T > /dev/null
+        build/tools/roomservice.py $product true
+        popd > /dev/null
+    fi
+    if [ $? -ne 0 ]
+    then
         echo
         echo "** Don't have a product spec for: '$product'"
         echo "** Do you have the right repo manifest?"
@@ -518,6 +584,8 @@ function lunch()
     export TARGET_BUILD_TYPE=release
 
     echo
+
+    fixup_common_out_dir
 
     set_stuff_for_environment
     printconfig
@@ -573,6 +641,21 @@ function tapas()
 
     set_stuff_for_environment
     printconfig
+}
+
+function pushboot() {
+    if [ ! -f $OUT/$* ]; then
+        echo "File not found: $OUT/$*"
+        return 1
+    fi
+
+    adb root
+    sleep 1
+    adb wait-for-device
+    adb remount
+
+    adb push $OUT/$* /$*
+    adb reboot
 }
 
 function gettop
@@ -1295,6 +1378,36 @@ function godir () {
     \cd $T/$pathname
 }
 
+# Make using all available CPUs
+function mka() {
+    case `uname -s` in
+        Darwin)
+            make -j `sysctl hw.ncpu|cut -d" " -f2` "$@"
+            ;;
+        *)
+            schedtool -B -n 1 -e ionice -n 1 make -j `cat /proc/cpuinfo | grep "^processor" | wc -l` "$@"
+            ;;
+    esac
+}
+
+function fixup_common_out_dir() {
+    common_out_dir=$(get_build_var OUT_DIR)/target/common
+    target_device=$(get_build_var TARGET_DEVICE)
+    if [ ! -z $ANDROID_FIXUP_COMMON_OUT ]; then
+        if [ -d ${common_out_dir} ] && [ ! -L ${common_out_dir} ]; then
+            mv ${common_out_dir} ${common_out_dir}-${target_device}
+            ln -s ${common_out_dir}-${target_device} ${common_out_dir}
+        else
+            [ -L ${common_out_dir} ] && rm ${common_out_dir}
+            mkdir -p ${common_out_dir}-${target_device}
+            ln -s ${common_out_dir}-${target_device} ${common_out_dir}
+        fi
+    else
+        [ -L ${common_out_dir} ] && rm ${common_out_dir}
+        mkdir -p ${common_out_dir}
+    fi
+}
+
 # Force JAVA_HOME to point to java 1.6 if it isn't already set
 function set_java_home() {
     if [ ! "$JAVA_HOME" ]; then
@@ -1308,6 +1421,13 @@ function set_java_home() {
         esac
     fi
 }
+
+function repopick() {
+    set_stuff_for_environment
+    T=$(gettop)
+    $T/build/tools/repopick.py $@
+}
+
 
 # Print colored exit condition
 function pez {
