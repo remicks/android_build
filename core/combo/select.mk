@@ -60,7 +60,6 @@ $(combo_target)GLOBAL_LDFLAGS :=
 endif
 endif
 $(combo_target)GLOBAL_ARFLAGS := crsP
-
 $(combo_target)EXECUTABLE_SUFFIX :=
 $(combo_target)SHLIB_SUFFIX := .so
 $(combo_target)JNILIB_SUFFIX := $($(combo_target)SHLIB_SUFFIX)
