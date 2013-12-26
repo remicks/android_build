@@ -59,12 +59,12 @@ function check_product()
         return
     fi
 
-    if (echo -n $1 | grep -q -e "^illusion_") ; then
-       CUSTOM_BUILD=$(echo -n $1 | sed -e 's/^illusion_//g')
+    if (echo -n $1 | grep -q -e "^ill_") ; then
+       ILL_BUILD=$(echo -n $1 | sed -e 's/^ill_//g')
     else
-       CUSTOM_BUILD=
+       ILL_BUILD=
     fi
-    export CUSTOM_BUILD
+    export ILL_BUILD
 
     CALLED_FROM_SETUP=true BUILD_SYSTEM=build/core \
         TARGET_PRODUCT=$1 \
