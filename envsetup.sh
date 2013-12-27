@@ -13,6 +13,8 @@ Invoke ". build/envsetup.sh" from your shell to add the following functions to y
 - jgrep:   Greps on all local Java files.
 - resgrep: Greps on all local res/*.xml files.
 - godir:   Go to the directory containing a file.
+- mka:     Builds using SCHED_BATCH on all processors.
+- brunch:  brunch <product_name> [-j<X>]
 - pushboot:Push a file from your OUT dir to your phone and reboots it, using absolute path.
 
 Look at the source to view more functions. The complete list is:
@@ -463,7 +465,11 @@ function brunch()
 {
     breakfast $*
     if [ $? -eq 0 ]; then
-        time mka bacon
+        if [ ! -z "$2" ]; then
+            time mka bacon $2
+        else
+            time mka bacon
+        fi
     else
         echo "No such item in brunch menu. Try 'breakfast'"
         return 1
@@ -1382,10 +1388,18 @@ function godir () {
 function mka() {
     case `uname -s` in
         Darwin)
-            make -j `sysctl hw.ncpu|cut -d" " -f2` "$@"
+            if [ ! -z "$2" ]; then
+                make "$@"
+            else
+                make -j $(( $(sysctl hw.ncpu|cut -d" " -f2) * 2 )) "$@"
+            fi
             ;;
         *)
-            schedtool -B -e make -j `cat /proc/cpuinfo | grep "^processor" | wc -l` "$@"
+            if [ ! -z "$2" ]; then
+                schedtool -B -e make "$@"
+            else
+                schedtool -B -e make -j "$(( $(cat /proc/cpuinfo | grep "^processor" | wc -l) * 2 ))" "$@"
+            fi
             ;;
     esac
 }
