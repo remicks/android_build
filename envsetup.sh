@@ -500,7 +500,7 @@ function breakfast()
             lunch $target
         else
             # This is probably just the illusion model name
-            lunch illusion_$target-userdebug
+            lunch ill_$target-userdebug
         fi
     fi
     return $?
