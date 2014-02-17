@@ -61,12 +61,12 @@ function check_product()
         return
     fi
 
-    if (echo -n $1 | grep -q -e "^ill_") ; then
-       ILL_BUILD=$(echo -n $1 | sed -e 's/^ill_//g')
+    if (echo -n $1 | grep -q -e "^plain_") ; then
+       PLAIN_BUILD=$(echo -n $1 | sed -e 's/^plain_//g')
     else
-       ILL_BUILD=
+       PLAIN_BUILD=
     fi
-    export ILL_BUILD
+    export PLAIN_BUILD
 
     CALLED_FROM_SETUP=true BUILD_SYSTEM=build/core \
         TARGET_PRODUCT=$1 \
@@ -500,7 +500,7 @@ function breakfast()
             lunch $target
         else
             # This is probably just the illusion model name
-            lunch ill_$target-userdebug
+            lunch plain_$target-userdebug
         fi
     fi
     return $?

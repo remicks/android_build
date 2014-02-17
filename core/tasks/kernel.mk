@@ -14,7 +14,7 @@
 
 # Android makefile to build kernel as a part of Android Build
 
--include vendor/illusion/config/branding.mk
+-include vendor/plain/config/branding.mk
 
 TARGET_AUTO_KDIR := $(shell echo $(TARGET_DEVICE_DIR) | sed -e 's/^device/kernel/g')
 
