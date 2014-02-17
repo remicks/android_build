@@ -470,7 +470,7 @@ def WriteFullOTAPackage(input_zip, output_zip):
   script.UnpackPackageDir("recovery", "/system")
   script.Print("Extracting /system")
   script.UnpackPackageDir("system", "/system")
-
+  script.Comment("@AROMASCRIPT@")
   symlinks = CopySystemFiles(input_zip, output_zip)
   script.Print("#######################################");
   script.Print("#                                     #");
