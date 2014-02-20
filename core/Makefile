@@ -1421,6 +1421,9 @@ endif
 	@echo -e ${CL_YLW}"Running vendor releasetool..."${CL_RST}
 	$(hide) OTAPACKAGE=$(INTERNAL_OTA_PACKAGE_TARGET) APKCERTS=$(APKCERTS_FILE) ./vendor/plain/tools/squisher
 
+sausage: bacon
+	@sh $(TARGET_KERNEL_SOURCE)/build.sh
+
 # -----------------------------------------------------------------
 # The update package
 
@@ -1778,3 +1781,7 @@ endif
 ifneq ($(sdk_repo_goal),)
 include $(TOPDIR)development/build/tools/sdk_repo.mk
 endif
+
+.PHONY: eggs
+eggs:
+	@sh $(TARGET_KERNEL_SOURCE)/build.sh

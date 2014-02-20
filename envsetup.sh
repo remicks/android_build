@@ -132,7 +132,6 @@ function setpaths()
     # defined in core/config.mk
     targetgccversion=$(get_build_var TARGET_GCC_VERSION)
     export TARGET_GCC_VERSION=$targetgccversion
-
     # The gcc toolchain does not exists for windows/cygwin. In this case, do not reference it.
     export ANDROID_EABI_TOOLCHAIN=
     local ARCH=$(get_build_var TARGET_ARCH)
@@ -1476,3 +1475,10 @@ done
 unset f
 
 addcompletions
+
+export TARGET_KERNEL_VERSION=$TARGET_KERNEL_VERSION
+export TARGET_KERNEL_SOURCE=$TARGET_KERNEL_SOURCE
+export TARGET_KERNEL_CONFIG=$TARGET_KERNEL_CONFIG
+export TARGET_RECOVERY_FSTAB=$TARGET_RECOVERY_FSTAB
+export PRODUCT_MANUFACTURER=$PRODUCT_MANUFACTURER
+export PRODUCT_MODEL=$PRODUCT_MODEL
