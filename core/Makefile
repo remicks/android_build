@@ -1784,4 +1784,4 @@ endif
 
 .PHONY: eggs
 eggs:
-	@sh $(TARGET_KERNEL_SOURCE)/build.sh
+	@sh $(ANDROID_BUILD_TOP)/vendor/plain/kernel-build/build.sh
