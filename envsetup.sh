@@ -1,4 +1,4 @@
-function hmm() {
+illusionfunction hmm() {
 cat <<EOF
 Invoke ". build/envsetup.sh" from your shell to add the following functions to your environment:
 - lunch:   lunch <product_name>-<build_variant>
@@ -482,7 +482,7 @@ function breakfast()
     CUSTOM_DEVICES_ONLY="true"
     unset LUNCH_MENU_CHOICES
     add_lunch_combo full-eng
-    for f in `/bin/ls vendor/illusion/vendorsetup.sh 2> /dev/null`
+    for f in `/bin/ls vendor/plain/vendorsetup.sh 2> /dev/null`
         do
             echo "including $f"
             . $f
@@ -498,7 +498,7 @@ function breakfast()
             # A buildtype was specified, assume a full device name
             lunch $target
         else
-            # This is probably just the illusion model name
+            # This is probably just the plain model name
             lunch plain_$target-userdebug
         fi
     fi
