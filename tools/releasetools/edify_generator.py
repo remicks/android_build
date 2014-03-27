@@ -157,6 +157,8 @@ class EdifyGenerator(object):
     fstab = self.info.get("fstab", None)
     if fstab:
       p = fstab[mount_point]
+      self.script.append('ifelse(is_mounted("%s") == "%s", unmount("%s"));' %
+                         (p.mount_point, p.mount_point, p.mount_point))
       self.script.append('mount("%s", "%s", "%s", "%s");' %
                          (p.fs_type, common.PARTITION_TYPES[p.fs_type],
                           p.device, p.mount_point))
