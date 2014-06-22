@@ -488,6 +488,7 @@ function brunch()
 function breakfast()
 {
     target=$1
+    local variant=$2
     PLAIN_DEVICES_ONLY="true"
     unset LUNCH_MENU_CHOICES
     add_lunch_combo full-eng
@@ -508,6 +509,9 @@ function breakfast()
             lunch $target
         else
             # This is probably just the PLAIN model name
+            if [ -z "$variant" ]; then
+                variant="userdebug"
+            fi
             lunch plain_$target-userdebug
         fi
     fi
