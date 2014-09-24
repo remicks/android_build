@@ -40,13 +40,16 @@ endif
 # Check for broken versions of make.
 # (Allow any version under Cygwin since we don't actually build the platform there.)
 ifeq (,$(findstring CYGWIN,$(shell uname -sm)))
-ifneq (1,$(strip $(shell expr $(MAKE_VERSION) \>= 3.81)))
+ifeq (0,$(shell expr $$(echo $(MAKE_VERSION) | sed "s/[^0-9\.].*//") = 3.81))
+ifeq (0,$(shell expr $$(echo $(MAKE_VERSION) | sed "s/[^0-9\.].*//") = 3.82))
+ifeq (0,$(shell expr $$(echo $(MAKE_VERSION) | sed "s/[^0-9\.].*//") = 4.0))
 $(warning ********************************************************************************)
 $(warning *  You are using version $(MAKE_VERSION) of make.)
-$(warning *  Android can only be built by versions 3.81 and higher.)
+$(warning *  Android is tested to build with versions 3.81, 3.82 and 4.0)
 $(warning *  see https://source.android.com/source/download.html)
 $(warning ********************************************************************************)
-$(error stopping)
+endif
+endif
 endif
 endif
 
@@ -146,16 +149,24 @@ $(info $(space))
 $(info You use OpenJDK but only Sun/Oracle JDK is supported.)
 $(info Please follow the machine setup instructions at)
 $(info $(space)$(space)$(space)$(space)https://source.android.com/source/download.html)
-$(info $(space))
-$(info Continue at your own peril!)
 $(info ************************************************************)
 endif
 
 # Check for the correct version of java
 java_version := $(shell java -version 2>&1 | head -n 1 | grep '^java .*[ "]1\.[67][\. "$$]')
+ifneq ($(shell java -version 2>&1 | grep -i openjdk),)
+$(warning ************************************************************)
+$(warning AOSP errors out when using OpenJDK, saying you need to use)
+$(warning Java SE 1.6 instead.)
+$(warning A build with OpenJDK seems to work fine though - if you)
+$(warning run into any Java errors, you may want to try using the)
+$(warning version required by AOSP though.)
+$(warning ************************************************************)
+#java_version :=
+endif
 ifeq ($(strip $(java_version)),)
 $(info ************************************************************)
-$(info You are attempting to build with the incorrect version)
+$(info You are attempting to build with an unsupported version)
 $(info of java.)
 $(info $(space))
 $(info Your version is: $(shell java -version 2>&1 | head -n 1).)
@@ -164,7 +175,6 @@ $(info $(space))
 $(info Please follow the machine setup instructions at)
 $(info $(space)$(space)$(space)$(space)https://source.android.com/source/download.html)
 $(info ************************************************************)
-$(error stop)
 endif
 
 # Check for the correct version of javac
@@ -180,9 +190,10 @@ $(info $(space))
 $(info Please follow the machine setup instructions at)
 $(info $(space)$(space)$(space)$(space)https://source.android.com/source/download.html)
 $(info ************************************************************)
-$(error stop)
+#$(error stop)
 endif
 
+# We're Unicorns. We use magic. Not emulators.
 ifndef BUILD_EMULATOR
 ifeq (darwin,$(HOST_OS))
 GCC_REALPATH = $(realpath $(shell which $(HOST_CC)))
@@ -195,11 +206,11 @@ ifneq ($(findstring llvm-gcc,$(GCC_REALPATH)),)
   $(warning ****************************************)
   BUILD_EMULATOR := false
 else
-  BUILD_EMULATOR := true
+  BUILD_EMULATOR := false
 endif
-else   # HOST_OS is not darwin
-  BUILD_EMULATOR := true
-endif  # HOST_OS is darwin
+else
+  BUILD_EMULATOR := false
+endif
 endif
 
 $(shell echo 'VERSIONS_CHECKED := $(VERSION_CHECK_SEQUENCE_NUMBER)' \
@@ -296,7 +307,12 @@ enable_target_debugging := true
 tags_to_install :=
 ifneq (,$(user_variant))
   # Target is secure in user builds.
-  ADDITIONAL_DEFAULT_PROPERTIES += ro.secure=1
+  ADDITIONAL_DEFAULT_PROPERTIES += ro.secure=0
+
+  # Secure adb connections
+  ifneq ($(TARGET_WANTS_UNSECURE_ADB),true)
+  ADDITIONAL_DEFAULT_PROPERTIES += ro.adb.secure=1
+  endif
 
   ifeq ($(user_variant),userdebug)
     # Pick up some extra useful tools
@@ -309,16 +325,8 @@ ifneq (,$(user_variant))
     enable_target_debugging :=
   endif
 
-  # Turn on Dalvik preoptimization for user builds, but only if not
-  # explicitly disabled and the build is running on Linux (since host
-  # Dalvik isn't built for non-Linux hosts).
-  ifneq (true,$(DISABLE_DEXPREOPT))
-    ifeq ($(user_variant),user)
-      ifeq ($(HOST_OS),linux)
-        WITH_DEXPREOPT := true
-      endif
-    endif
-  endif
+  # Forcefully turn off odex
+  WITH_DEXPREOPT := false
 
   # Disallow mock locations by default for user builds
   ADDITIONAL_DEFAULT_PROPERTIES += ro.allow.mock.location=0
@@ -489,11 +497,7 @@ ifneq ($(dont_bother),true)
 subdir_makefiles := \
 	$(shell build/tools/findleaves.py --prune=$(OUT_DIR) --prune=.repo --prune=.git $(subdirs) Android.mk)
 
-ifneq ($(HIDE_MAKEFILE_INCLUDES),y)
-$(foreach mk, $(subdir_makefiles), $(info including $(mk) ...)$(eval include $(mk)))
-else
 $(foreach mk, $(subdir_makefiles), $(eval include $(mk)))
-endif
 
 endif # dont_bother
 
@@ -916,7 +920,7 @@ $(foreach module,$(sample_MODULES),$(eval $(call \
 sample_ADDITIONAL_INSTALLED := \
         $(filter-out $(modules_to_install) $(modules_to_check) $(ALL_PREBUILT),$(sample_MODULES))
 samplecode: $(sample_APKS_COLLECTION)
-	@echo -e ${PRT_TGT}"Collect sample code apks:"${CL_RST}" $^"
+	@echo "Collect sample code apks: $^"
 	# remove apks that are not intended to be installed.
 	rm -f $(sample_ADDITIONAL_INSTALLED)
 
@@ -925,8 +929,8 @@ findbugs: $(INTERNAL_FINDBUGS_HTML_TARGET) $(INTERNAL_FINDBUGS_XML_TARGET)
 
 .PHONY: clean
 clean:
-	@rm -rf $(OUT_DIR)
-	@echo -e ${PRT_TGT}"Entire build directory removed."${CL_RST}
+	@rm -rf $(OUT_DIR)/*
+	@echo "Entire build directory removed."
 
 .PHONY: clobber
 clobber: clean
@@ -936,7 +940,7 @@ clobber: clean
 #xxx scrape this from ALL_MODULE_NAME_TAGS
 .PHONY: modules
 modules:
-	@echo -e ${PRT_TGT}"Available sub-modules:"${CL_RST}
+	@echo "Available sub-modules:"
 	@echo "$(call module-names-for-tag-list,$(ALL_MODULE_TAGS))" | \
 	      tr -s ' ' '\n' | sort -u | $(COLUMN)
 

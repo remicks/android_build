@@ -92,12 +92,12 @@ class EdifyGenerator(object):
 
   def AssertDevice(self, device):
     """Assert that the device identifier is the given string."""
-    cmd = ('(' +
+    cmd = ('assert(' +
            ' || \0'.join(['getprop("ro.product.device") == "%s" || getprop("ro.build.product") == "%s"'
                          % (i, i) for i in device.split(",")]) +
-           ') || abort("This package is for \\"%s\\" devices\n'
+           ' || abort("This package is for \\"%s\\" devices; '
            'this is a \\"" + getprop("ro.product.device") + "\\".");'
-           ) % (device)
+           ');') % device
     self.script.append(self._WordWrap(cmd))
 
   def AssertSomeBootloader(self, *bootloaders):
@@ -107,6 +107,11 @@ class EdifyGenerator(object):
                          for b in bootloaders]) +
            ");")
     self.script.append(self._WordWrap(cmd))
+
+  def RunPersist(self, arg):
+    self.script.append('package_extract_file("install/bin/persist.sh", "/tmp/persist.sh");')
+    self.script.append('set_perm(0, 0, 0777, "/tmp/persist.sh");')
+    self.script.append(('run_program("/tmp/persist.sh", "%s");' % arg))
 
   def RunBackup(self, command):
     self.script.append('package_extract_file("system/bin/backuptool.sh", "/tmp/backuptool.sh");')
@@ -157,8 +162,6 @@ class EdifyGenerator(object):
     fstab = self.info.get("fstab", None)
     if fstab:
       p = fstab[mount_point]
-      self.script.append('ifelse(is_mounted("%s") == "%s", unmount("%s"));' %
-                         (p.mount_point, p.mount_point, p.mount_point))
       self.script.append('mount("%s", "%s", "%s", "%s");' %
                          (p.fs_type, common.PARTITION_TYPES[p.fs_type],
                           p.device, p.mount_point))
@@ -243,13 +246,14 @@ class EdifyGenerator(object):
       args = {'device': p.device, 'fn': fn}
       if partition_type == "MTD":
         self.script.append(
-            'write_raw_image(package_extract_file("%(fn)s"), "%(device)s");'
+            'package_extract_file("%(fn)s", "/tmp/boot.img");'
+            'write_raw_image("/tmp/boot.img", "%(device)s");' % args
             % args)
       elif partition_type == "EMMC":
         self.script.append(
             'package_extract_file("%(fn)s", "%(device)s");' % args)
       elif partition_type == "BML":
-          self.script.append(
+	        self.script.append(
             ('assert(package_extract_file("%(fn)s", "/tmp/%(device)s.img"),\n'
              '       write_raw_image("/tmp/%(device)s.img", "%(device)s"),\n'
              '       delete("/tmp/%(device)s.img"));') % args)

@@ -4,6 +4,11 @@
 ####################################
 
 DEXPREOPT_BOOT_JARS := $(PRODUCT_BOOT_JARS)
+
+ifneq ($(strip $(TARGET_ADDITIONAL_BOOTCLASSPATH)),)
+DEXPREOPT_BOOT_JARS := $(DEXPREOPT_BOOT_JARS):$(TARGET_ADDITIONAL_BOOTCLASSPATH)
+endif
+
 DEXPREOPT_BOOT_JARS_MODULES := $(subst :, ,$(DEXPREOPT_BOOT_JARS))
 PRODUCT_BOOTCLASSPATH := $(subst $(space),:,$(foreach m,$(DEXPREOPT_BOOT_JARS_MODULES),/system/framework/$(m).jar))
 
@@ -48,7 +53,7 @@ $(eval _dbj_jar_no_dex := $(DEXPREOPT_BOOT_JAR_DIR_FULL_PATH)/$(1)_nodex.jar)
 $(eval _dbj_src_jar := $(call intermediates-dir-for,JAVA_LIBRARIES,$(1),,COMMON)/javalib.jar)
 $(eval $(_dbj_odex): PRIVATE_DBJ_JAR := $(_dbj_jar))
 $(_dbj_odex) : $(_dbj_src_jar) | $(ACP) $(DEXPREOPT) $(DEXOPT)
-	@echo -e ${PRT_TGT}"Dexpreopt Boot Jar:"${CL_RST}" $$@"
+	@echo "Dexpreopt Boot Jar: $$@"
 	$(hide) rm -f $$@
 	$(hide) mkdir -p $$(dir $$@)
 	$(hide) $(ACP) -fp $$< $$(PRIVATE_DBJ_JAR)

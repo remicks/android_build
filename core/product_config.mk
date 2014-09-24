@@ -184,16 +184,16 @@ ifneq ($(strip $(TARGET_BUILD_APPS)),)
 all_product_configs := $(call get-product-makefiles,\
     $(SRC_TARGET_DIR)/product/AndroidProducts.mk)
 else
-  ifneq ($(PLAIN_BUILD),)
-    all_product_configs := $(shell ls device/*/$(PLAIN_BUILD)/plain.mk)
+  ifneq ($(PLAIN_PRODUCT),)
+     all_product_configs := $(shell ls device/*/$(PLAIN_BUILD)/plain.mk)
   else
-# Read in all of the product definitions specified by the AndroidProducts.mk
-# files in the tree.
-all_product_configs := $(get-all-product-makefiles)
- endif # PLAIN_BUILD
+    # Read in all of the product definitions specified by the AndroidProducts.mk
+    # files in the tree.
+    all_product_configs := $(get-all-product-makefiles)
+  endif # PLAIN_PRODUCT
 endif
 
-ifeq ($(PLAIN_BUILD),)
+ifeq ($(PLAIN_PRODUCT),)
 # Find the product config makefile for the current product.
 # all_product_configs consists items like:
 # <product_name>:<path_to_the_product_makefile>
@@ -222,6 +222,7 @@ else
 endif
 current_product_makefile := $(strip $(current_product_makefile))
 all_product_makefiles := $(strip $(all_product_makefiles))
+
 
 ifneq (,$(filter product-graph dump-products, $(MAKECMDGOALS)))
 # Import all product makefiles.
@@ -362,22 +363,6 @@ endif
 # The optional :<owner> is used to indicate the owner of a vendor file.
 PRODUCT_COPY_FILES := \
     $(strip $(PRODUCTS.$(INTERNAL_PRODUCT).PRODUCT_COPY_FILES))
-
-# We might want to skip items listed in PRODUCT_COPY_FILES for
-# various reasons. This is useful for replacing a binary module with one
-# built from source. This should be a list of destination files under $OUT
-PRODUCT_COPY_FILES_OVERRIDES := \
-	$(addprefix %:, $(strip $(PRODUCTS.$(INTERNAL_PRODUCT).PRODUCT_COPY_FILES_OVERRIDES)))
-
-ifneq ($(PRODUCT_COPY_FILES_OVERRIDES),)
-    PRODUCT_COPY_FILES := $(filter-out $(PRODUCT_COPY_FILES_OVERRIDES), $(PRODUCT_COPY_FILES))
-endif
-
-.PHONY: listcopies
-listcopies:
-	@echo "Copy files: $(PRODUCT_COPY_FILES)"
-	@echo "Overrides: $(PRODUCT_COPY_FILES_OVERRIDES)"
-
 
 # A list of property assignments, like "key = value", with zero or more
 # whitespace characters on either side of the '='.

@@ -1,22 +1,28 @@
 function hmm() {
 cat <<EOF
 Invoke ". build/envsetup.sh" from your shell to add the following functions to your environment:
-- lunch:   lunch <product_name>-<build_variant>
-- tapas:   tapas [<App1> <App2> ...] [arm|x86|mips|armv5] [eng|userdebug|user]
-- croot:   Changes directory to the top of the tree.
-- m:       Makes from the top of the tree.
-- mm:      Builds all of the modules in the current directory, but not their dependencies.
-- mmm:     Builds all of the modules in the supplied directories, but not their dependencies.
-- mma:     Builds all of the modules in the current directory, and their dependencies.
-- mmma:    Builds all of the modules in the supplied directories, and their dependencies.
-- cgrep:   Greps on all local C/C++ files.
-- jgrep:   Greps on all local Java files.
-- resgrep: Greps on all local res/*.xml files.
-- godir:   Go to the directory containing a file.
-- mka:     Builds using SCHED_BATCH on all processors.
-- brunch:  brunch <product_name> [-j<X>]
-- pushboot:Push a file from your OUT dir to your phone and reboots it, using absolute path.
-
+- lunch:    lunch <product_name>-<build_variant>
+- tapas:    tapas [<App1> <App2> ...] [arm|x86|mips] [eng|userdebug|user]
+- croot:    Changes directory to the top of the tree.
+- groot:    Changes directory to the root of the git project.
+- m:        Makes from the top of the tree.
+- mm:       Builds all of the modules in the current directory.
+- mmm:      Builds all of the modules in the supplied directories.
+- cgrep:    Greps on all local C/C++ files.
+- mgrep:    Greps on all local Makefiles.
+- jgrep:    Greps on all local Java files.
+- resgrep:  Greps on all local res/*.xml files.
+- gcd:      cd's to a git project in the build tree.
+- godir:    Go to the directory containing a file.
+- mka:      Builds using SCHED_BATCH on all processors
+- mbot:     Builds for all devices using the psuedo buildbot
+- mkapush:  Same as mka with the addition of adb pushing to the device.
+- pstest:   cherry pick a patch from the PLAIN gerrit instance.
+- pspush:   push commit to PLAIN gerrit instance.
+- taco:     Builds for a single device using the pseudo buildbot
+- reposync: Parallel repo sync using ionice and SCHED_BATCH
+- addaosp:  Add git remote for the AOSP repository
+- sdkgen:   Create and add a custom sdk platform to your sdk directory from this source tree
 Look at the source to view more functions. The complete list is:
 EOF
     T=$(gettop)
@@ -62,11 +68,11 @@ function check_product()
     fi
 
     if (echo -n $1 | grep -q -e "^plain_") ; then
-       PLAIN_BUILD=$(echo -n $1 | sed -e 's/^plain_//g')
+       PLAIN_PRODUCT=$(echo -n $1 | sed -e 's/^plain_//g')
     else
-       PLAIN_BUILD=
+       PLAIN_PRODUCT=
     fi
-    export PLAIN_BUILD
+      export PLAIN_PRODUCT
 
     CALLED_FROM_SETUP=true BUILD_SYSTEM=build/core \
         TARGET_PRODUCT=$1 \
@@ -132,6 +138,7 @@ function setpaths()
     # defined in core/config.mk
     targetgccversion=$(get_build_var TARGET_GCC_VERSION)
     export TARGET_GCC_VERSION=$targetgccversion
+
     # The gcc toolchain does not exists for windows/cygwin. In this case, do not reference it.
     export ANDROID_EABI_TOOLCHAIN=
     local ARCH=$(get_build_var TARGET_ARCH)
@@ -239,17 +246,17 @@ function settitle()
 
 function addcompletions()
 {
-    local T dir f
-
     # Keep us from trying to run in something that isn't bash.
     if [ -z "${BASH_VERSION}" ]; then
         return
     fi
 
     # Keep us from trying to run in bash that's too old.
-    if [ ${BASH_VERSINFO[0]} -lt 3 ]; then
+    if [ "${BASH_VERSINFO[0]}" -lt 4 ] ; then
         return
     fi
+
+    local T dir f
 
     dir="sdk/bash_completion"
     if [ -d ${dir} ]; then
@@ -447,7 +454,11 @@ function print_lunch_menu()
     echo
     echo "You're building on" $uname
     echo
-    echo "Lunch menu... pick a combo:"
+    if [ "z${PLAIN_DEVICES_ONLY}" != "z" ]; then
+       echo "Breakfast menu... pick a combo:"
+    else
+       echo "Lunch menu... pick a combo:"
+    fi
 
     local i=1
     local choice
@@ -457,6 +468,10 @@ function print_lunch_menu()
         i=$(($i+1))
     done
 
+    if [ "z${PLAIN_DEVICES_ONLY}" != "z" ]; then
+       echo "... and don't forget the bacon!"
+    fi
+
     echo
 }
 
@@ -464,11 +479,7 @@ function brunch()
 {
     breakfast $*
     if [ $? -eq 0 ]; then
-        if [ ! -z "$2" ]; then
-            time mka bacon $2
-        else
-            time mka bacon
-        fi
+        mka bacon
     else
         echo "No such item in brunch menu. Try 'breakfast'"
         return 1
@@ -479,7 +490,7 @@ function brunch()
 function breakfast()
 {
     target=$1
-    CUSTOM_DEVICES_ONLY="true"
+    PLAIN_DEVICES_ONLY="true"
     unset LUNCH_MENU_CHOICES
     add_lunch_combo full-eng
     for f in `/bin/ls vendor/plain/vendorsetup.sh 2> /dev/null`
@@ -498,7 +509,7 @@ function breakfast()
             # A buildtype was specified, assume a full device name
             lunch $target
         else
-            # This is probably just the plain model name
+            # This is probably just the PLAIN model name
             lunch plain_$target-userdebug
         fi
     fi
@@ -548,17 +559,14 @@ function lunch()
     check_product $product
     if [ $? -ne 0 ]
     then
-        # if we can't find the product, try to grab it from our github
+        # if we can't find a product, try to grab it off the CM github
         T=$(gettop)
         pushd $T > /dev/null
         build/tools/roomservice.py $product
         popd > /dev/null
         check_product $product
     else
-        T=$(gettop)
-        pushd $T > /dev/null
         build/tools/roomservice.py $product true
-        popd > /dev/null
     fi
     if [ $? -ne 0 ]
     then
@@ -590,8 +598,6 @@ function lunch()
 
     echo
 
-    fixup_common_out_dir
-
     set_stuff_for_environment
     printconfig
 }
@@ -607,7 +613,7 @@ function _lunch()
     COMPREPLY=( $(compgen -W "${LUNCH_MENU_CHOICES[*]}" -- ${cur}) )
     return 0
 }
-complete -F _lunch lunch
+complete -F _lunch lunch 2>/dev/null
 
 # Configures the build to build unbundled apps.
 # Run tapas with one ore more app names (from LOCAL_PACKAGE_NAME)
@@ -648,19 +654,51 @@ function tapas()
     printconfig
 }
 
-function pushboot() {
-    if [ ! -f $OUT/$* ]; then
-        echo "File not found: $OUT/$*"
+function eat()
+{
+    if [ "$OUT" ] ; then
+        MODVERSION=`sed -n -e'/ro\.plain\.version/s/^.*=//p' $OUT/system/build.prop`
+        ZIPFILE=$MODVERSION.zip
+        ZIPPATH=$OUT/$ZIPFILE
+        if [ ! -f $ZIPPATH ] ; then
+            echo "Nothing to eat"
+            return 1
+        fi
+        adb start-server # Prevent unexpected starting server message from adb get-state in the next line
+        if [ $(adb get-state) != device -a $(adb shell busybox test -e /sbin/recovery 2> /dev/null; echo $?) != 0 ] ; then
+            echo "No device is online. Waiting for one..."
+            echo "Please connect USB and/or enable USB debugging"
+            until [ $(adb get-state) = device -o $(adb shell busybox test -e /sbin/recovery 2> /dev/null; echo $?) = 0 ];do
+                sleep 1
+            done
+            echo "Device Found.."
+        fi
+        # in recovery we push to /data/media/0, otherwise push to /sdcard
+        DEVICEPATH=/sdcard
+        if [ $(adb get-state) != recovery ] ; then
+          DEVICEPATH=/data/media/0
+        fi
+        echo "Pushing $ZIPFILE to device"
+        if adb push $ZIPPATH $DEVICEPATH/$ZIPFILE ; then
+            cat << EOF > /tmp/command
+install $DEVICEPATH/$ZIPFILE
+EOF
+            if [ -n "$EAT_GAPPS_PATH" ]; then
+              cat << EOF >> /tmp/command
+install $DEVICEPATH/$EAT_GAPPS_PATH
+EOF
+            fi
+            if adb push /tmp/command /cache/recovery/openrecoveryscript ; then
+                echo "Rebooting into recovery for installation"
+                adb reboot recovery
+            fi
+            rm /tmp/command
+        fi
+    else
+        echo "Nothing to eat"
         return 1
     fi
-
-    adb root
-    sleep 1
-    adb wait-for-device
-    adb remount
-
-    adb push $OUT/$* /$*
-    adb reboot
+    return $?
 }
 
 function gettop
@@ -679,7 +717,7 @@ function gettop
             T=
             while [ \( ! \( -f $TOPFILE \) \) -a \( $PWD != "/" \) ]; do
                 \cd ..
-                T=`PWD= /bin/pwd`
+                T=`PWD= /bin/pwd -P`
             done
             \cd $HERE
             if [ -f "$T/$TOPFILE" ]; then
@@ -856,6 +894,46 @@ function croot()
     else
         echo "Couldn't locate the top of the tree.  Try setting TOP."
     fi
+}
+
+function groot()
+{
+    T=$(git rev-parse --show-cdup)
+    if [ "$T" ]; then
+        cd $(git rev-parse --show-cdup)
+    else
+        echo "Already at the root of the git project."
+    fi
+}
+
+function gcd()
+{
+    # TODO make handling of repos with the same name a bit cleaner/easier (ex grouper)
+    T=$(gettop)
+    repo="$T/.repo"
+    if [ -d "$repo/local_manifests" ]; then
+        local_manifests=`find $repo/local_manifests -name '*.xml'`
+    fi
+
+    if [ -n "$2" ]; then
+        local goto=`grep -r "$1" "$repo/manifest.xml" "$local_manifests" | grep "$2" | cut -f2 -d '"'`
+    else
+        # Currently defaults to CDing to the first repo if multiples (ex. grouper). This will
+        # traditionally be the device tree, so for example if you needed the kernel repo instead
+        # you would have to execute 'gcd grouper kernel'
+        local goto=`cat "$repo/manifest.xml" "$local_manifests" | cut -f2 -d '"' | grep "$1"$ | head -n 1`
+    fi
+
+    # Error checking, cause this code is still a bit ghetto
+    check=`echo "$goto" | rev | cut -f1 -d "/" | rev`
+    if [ "$1" != "$check" ]; then
+        echo "Something went wrong and you're not in the correct repo."
+        echo "This happens sometimes due to the AOSP repo nomenclature."
+        echo "To fix this, run gcd with more detail."
+        echo "ex. \`gcd grouper kernel\` instead of just \`gcd grouper\`"
+    fi
+
+    cd "$T/$goto"
 }
 
 function cproj()
@@ -1080,6 +1158,12 @@ function jgrep()
 {
     find . -name .repo -prune -o -name .git -prune -o  -type f -name "*\.java" -print0 | xargs -0 grep --color -n "$@"
 }
+
+function mgrep()
+{
+    find . -name .repo -prune -o -name .git -prune -o  -type f -name "*\.mk" -print0 | xargs -0 grep --color -n "$@"
+}
+
 
 function cgrep()
 {
@@ -1383,42 +1467,188 @@ function godir () {
     \cd $T/$pathname
 }
 
-# Make using all available CPUs
 function mka() {
     case `uname -s` in
         Darwin)
-            if [ ! -z "$2" ]; then
-                make "$@"
-            else
-                make -j $(( $(sysctl hw.ncpu|cut -d" " -f2) * 2 )) "$@"
-            fi
+            make -j `sysctl hw.ncpu|cut -d" " -f2` "$@"
             ;;
         *)
-            if [ ! -z "$2" ]; then
-                schedtool -B -e make "$@"
-            else
-                schedtool -B -e make -j "$(( $(cat /proc/cpuinfo | grep "^processor" | wc -l) * 2 ))" "$@"
+            schedtool -B -n 1 -e ionice -n 1 make -j$(cat /proc/cpuinfo | grep "^processor" | wc -l) "$@"
+            ;;
+    esac
+}
+
+function mbot() {
+    unset LUNCH_MENU_CHOICES
+    croot
+    ./vendor/plain/bot/deploy.sh
+}
+
+function mkapush() {
+    # There's got to be a better way to do this stupid shit.
+    case `uname -s` in
+        Darwin)
+            if [ ! -f $ANDROID_PRODUCT_OUT/installed-files.txt ]; then
+                make -j `sysctl hw.ncpu|cut -d" " -f2` installed-file-list
+            fi
+            make -j `sysctl hw.ncpu|cut -d" " -f2` "$@"
+            ;;
+        *)
+            if [ ! -f $ANDROID_PRODUCT_OUT/installed-files.txt ]; then
+                schedtool -B -n 1 -e ionice -n 1 make -j$(cat /proc/cpuinfo | grep "^processor" | wc -l) installed-file-list
+            fi
+            schedtool -B -n 1 -e ionice -n 1 make -j$(cat /proc/cpuinfo | grep "^processor" | wc -l) "$@"
+            ;;
+    esac
+    case $@ in
+        *\ * )
+            echo $@ | awk 'gsub(/ /,"\n") {print}' | while read line; do
+                blackmagic=`sed -n "/$line/{p;q;}" $ANDROID_PRODUCT_OUT/installed-files.txt | awk {'print $2'}`
+                if [ `echo $blackmagic | cut -f3 -d "/" = framework ];
+                elif [ `echo $blackmagic | cut -f4 -d "/" = SystemUI.apk ]; then
+                    adb_stop=true
+                fi
+                adb remount
+                if [ $adb_stop = true ]; then
+                    adb shell stop
+                fi
+                adb push $ANDROID_PRODUCT_OUT$blackmagic $blackmagic
+                if [ $adb_stop = true ]; then
+                    adb shell start
+                fi
+            done
+            ;;
+        *)
+            blackmagic=`sed -n "/$@/{p;q;}" $ANDROID_PRODUCT_OUT/installed-files.txt | awk {'print $2'}`
+            if [ `echo $blackmagic | cut -f3 -d "/" = framework ];
+            elif [ `echo $blackmagic | cut -f4 -d "/" = SystemUI.apk ]; then
+                adb_stop=true
+            fi
+            adb remount
+            if [ $adb_stop = true ]; then
+                adb shell stop
+            fi
+            adb push $ANDROID_PRODUCT_OUT$blackmagic $blackmagic
+            if [ $adb_stop = true ]; then
+                adb shell start
             fi
             ;;
     esac
 }
 
-function fixup_common_out_dir() {
-    common_out_dir=$(get_build_var OUT_DIR)/target/common
-    target_device=$(get_build_var TARGET_DEVICE)
-    if [ ! -z $ANDROID_FIXUP_COMMON_OUT ]; then
-        if [ -d ${common_out_dir} ] && [ ! -L ${common_out_dir} ]; then
-            mv ${common_out_dir} ${common_out_dir}-${target_device}
-            ln -s ${common_out_dir}-${target_device} ${common_out_dir}
-        else
-            [ -L ${common_out_dir} ] && rm ${common_out_dir}
-            mkdir -p ${common_out_dir}-${target_device}
-            ln -s ${common_out_dir}-${target_device} ${common_out_dir}
-        fi
-    else
-        [ -L ${common_out_dir} ] && rm ${common_out_dir}
-        mkdir -p ${common_out_dir}
+function pstest() {
+    if [ -z "$1" ] || [ "$1" = '--help' ]
+    then
+        echo "pstest"
+        echo "to use: pstest PATCH_ID/PATCH_SET"
+        echo "example: pstest 5555/5"
+        exit 0
     fi
+
+    gerrit=gerrit.plain.co
+    project=`git config --get remote.plain.projectname`
+    patch="$1"
+    submission=`echo $patch | cut -f1 -d "/" | tail -c 3`
+
+    if [[ "$patch" != */* ]]
+    then
+        # User did not specify revision - pull latest
+        output=$( git ls-remote http://$gerrit/$project | grep /changes/$submission/$patch )
+        refchanges=$( echo "$output" | awk '{print $2}' )
+        latest=0
+
+        echo "$refchanges" | {
+            while read line; do
+                patchNum=${line##*/*/*/*/}
+                if [ $patchNum -gt $latest ]; then
+                    latest=$patchNum
+                fi
+            done
+            git fetch http://$gerrit/$project refs/changes/$submission/$patch/$latest && git cherry-pick FETCH_HEAD
+        }
+    else
+        git fetch http://$gerrit/$project refs/changes/$submission/$patch && git cherry-pick FETCH_HEAD
+    fi
+}
+
+function pspush_error() {
+        echo "Requires ~/.ssh/config setup with the the following info:"
+        echo "      Host gerrit"
+        echo "        HostName gerrit.plain.co"
+        echo "        User <your username>"
+        echo "        Port 29418"
+}
+
+function pspush() {
+    if [ -z "$1" ] || [ "$1" = '--help' ]; then
+        echo "pspush"
+        echo "to use:  pspush STATUS"
+        echo "where STATUS: for=regular; drafts=draft; heads=pushed to github"
+        echo "example: pspush for"
+    else
+        checkSshConfig=` grep -rH "gerrit.plain.co" ~/.ssh/config `
+        if [ "$checkSshConfig" != "" ]; then
+            gerrit=gerrit.plain.co
+            project=` git config --get remote.plain.projectname`
+            status="$1"
+            git push gerrit:/$project HEAD:refs/$status/kitkat
+        else
+            pspush_error
+        fi
+    fi
+}
+
+function taco() {
+    for sauce in "$@"
+    do
+        breakfast $sauce
+        if [ $? -eq 0 ]; then
+            croot
+            ./vendor/plain/bot/build_device.sh plain_$sauce-userdebug $sauce
+        else
+            echo "No such item in brunch menu. Try 'breakfast'"
+        fi
+    done
+}
+
+function addaosp() {
+    git remote rm aosp >/dev/null 2>&1
+    if [ ! -d .git ]; then
+        echo "Not a git repository."
+        exit -1
+    fi
+    REPO=`pwd`
+    REPO=${REPO##$ANDROID_BUILD_TOP/}
+    git remote add aosp https://android.googlesource.com/platform/"$REPO".git
+    if ( git remote -v | grep -qv aosp ) then
+        echo "AOSP $REPO remote created"
+    else
+        echo "Error creating remote"
+        exit -1
+    fi
+}
+
+function sdkgen() {
+        build/tools/customsdkgen.sh
+}
+
+function reposync() {
+    case `uname -s` in
+        Darwin)
+            if [[ $PLAIN_REPOSYNC_QUIET = true ]]; then
+                repo sync -j 4 "$@" | awk '!/Fetching\ project\ /'
+            else
+                repo sync -j 4 "$@"
+            fi
+            ;;
+        *)
+            if [[ $PLAIN_REPOSYNC_QUIET = true ]]; then
+                schedtool -B -n 1 -e ionice -n 1 repo sync -j 4 "$@" | awk '!/Fetching\ project\ /'
+            else
+                schedtool -B -n 1 -e ionice -n 1 repo sync -j 4 "$@"
+            fi
+            ;;
+    esac
 }
 
 # Force JAVA_HOME to point to java 1.6 if it isn't already set
@@ -1434,13 +1664,6 @@ function set_java_home() {
         esac
     fi
 }
-
-function repopick() {
-    set_stuff_for_environment
-    T=$(gettop)
-    $T/build/tools/repopick.py $@
-}
-
 
 # Print colored exit condition
 function pez {
@@ -1459,8 +1682,10 @@ if [ "x$SHELL" != "x/bin/bash" ]; then
     case `ps -o command -p $$` in
         *bash*)
             ;;
+        *zsh*)
+            ;;
         *)
-            echo "WARNING: Only bash is supported, use of other shell would lead to erroneous results"
+            echo "WARNING: Only bash and zsh are supported, use of other shell may lead to erroneous results"
             ;;
     esac
 fi
@@ -1475,10 +1700,4 @@ done
 unset f
 
 addcompletions
-
-export TARGET_KERNEL_VERSION=$TARGET_KERNEL_VERSION
-export TARGET_KERNEL_SOURCE=$TARGET_KERNEL_SOURCE
-export TARGET_KERNEL_CONFIG=$TARGET_KERNEL_CONFIG
-export TARGET_RECOVERY_FSTAB=$TARGET_RECOVERY_FSTAB
-export PRODUCT_MANUFACTURER=$PRODUCT_MANUFACTURER
-export PRODUCT_MODEL=$PRODUCT_MODEL
+export ANDROID_BUILD_TOP=$(gettop)

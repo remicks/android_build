@@ -68,14 +68,14 @@ endif
 
 TARGET_NO_UNDEFINED_LDFLAGS := -Wl,--no-undefined
 
-TARGET_arm_CFLAGS :=    -O3 \
+TARGET_arm_CFLAGS :=    -O2 \
                         -fomit-frame-pointer \
                         -fstrict-aliasing    \
                         -funswitch-loops
 
 # Modules can choose to compile some source as thumb.
 TARGET_thumb_CFLAGS :=  -mthumb \
-                        -O3 \
+                        -Os \
                         -fomit-frame-pointer \
                         -fno-strict-aliasing
 
@@ -91,6 +91,14 @@ TARGET_thumb_CFLAGS :=  -mthumb \
 ifeq ($(FORCE_ARM_DEBUGGING),true)
   TARGET_arm_CFLAGS += -fno-omit-frame-pointer -fno-strict-aliasing
   TARGET_thumb_CFLAGS += -marm -fno-omit-frame-pointer
+endif
+
+ifeq ($(TARGET_DISABLE_ARM_PIE),true)
+   PIE_GLOBAL_CFLAGS :=
+   PIE_EXECUTABLE_TRANSFORM :=
+else
+   PIE_GLOBAL_CFLAGS := -fPIE
+   PIE_EXECUTABLE_TRANSFORM := -fPIE -pie
 endif
 
 android_config_h := $(call select-android-config-h,linux-arm)
@@ -113,10 +121,9 @@ TARGET_GLOBAL_CFLAGS += \
 # We cannot turn it off blindly since the option is not available
 # in gcc-4.4.x.  We also want to disable sincos optimization globally
 # by turning off the builtin sin function.
-ifneq ($(filter 4.6 4.6.% 4.7 4.7.% 4.8 4.8.%, $(TARGET_GCC_VERSION)),)
+ifneq ($(filter 4.6 4.6.% 4.7 4.7.%, $(TARGET_GCC_VERSION)),)
 TARGET_GLOBAL_CFLAGS += -Wno-unused-but-set-variable -fno-builtin-sin \
-			-fno-strict-volatile-bitfields \
-			-Wno-unused-parameter
+			-fno-strict-volatile-bitfields
 endif
 
 # This is to avoid the dreaded warning compiler message:
@@ -165,6 +172,16 @@ ifneq ($(wildcard $(TARGET_CC)),)
 TARGET_LIBGCC := $(shell $(TARGET_CC) $(TARGET_GLOBAL_CFLAGS) -print-libgcc-file-name)
 target_libgcov := $(shell $(TARGET_CC) $(TARGET_GLOBAL_CFLAGS) \
         -print-file-name=libgcov.a)
+endif
+
+# Define LTO (Link Time Optimization options
+
+ifneq ($(strip $(DISABLE_BUILD_LTO)),)
+  # Disable global LTO if DISABLE_BUILD_LTO is set.
+  TARGET_LTO_CFLAGS := -flto \
+                       -fno-toplevel-reorder \
+                       -flto-compression-level=5 \
+                       -fuse-linker-plugin
 endif
 
 # Define FDO (Feedback Directed Optimization) options.

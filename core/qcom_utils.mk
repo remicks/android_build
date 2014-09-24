@@ -1,5 +1,7 @@
 # Board platforms lists to be used for
 # TARGET_BOARD_PLATFORM specific featurization
+
+ifndef TARGET_USE_PREBUILT_KERNEL
 QCOM_BOARD_PLATFORMS := msm7x27
 QCOM_BOARD_PLATFORMS += msm7x27a
 QCOM_BOARD_PLATFORMS += msm7x30
@@ -20,7 +22,7 @@ MSM7K_BOARD_PLATFORMS += msm7x27a
 MSM7K_BOARD_PLATFORMS += msm7k
 
 QSD8K_BOARD_PLATFORMS := qsd8k
-
+endif
 
 # vars for use by utils
 empty :=
@@ -179,7 +181,6 @@ GINGERBREAD_SDK_VERSIONS := 9 10
 HONEYCOMB_SDK_VERSIONS := 11 12 13
 ICECREAM_SANDWICH_SDK_VERSIONS := 14 15
 JELLY_BEAN_SDK_VERSIONS := 16 17 18
-KITKAT_SDK_VERSIONS := 19
 
 # $(call is-platform-sdk-version-at-least,version)
 # version is a numeric SDK_VERSION defined above

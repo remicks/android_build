@@ -52,12 +52,7 @@ LOCAL_DROIDDOC_CUSTOM_ASSET_DIR := assets
 endif
 
 
-$(full_target): PRIVATE_BOOTCLASSPATH :=
-ifeq ($(BUILD_OS),linux)
-# You have to set bootclasspath for javadoc manually on linux since Java 6.
-host_jdk_rt_jar := $(dir $(HOST_JDK_TOOLS_JAR))../jre/lib/rt.jar
-$(full_target): PRIVATE_BOOTCLASSPATH := $(host_jdk_rt_jar)
-endif
+$(full_target): PRIVATE_BOOTCLASSPATH := $(call java-lib-files, core)
 
 ifneq ($(LOCAL_IS_HOST_MODULE),true)
 
@@ -156,7 +151,7 @@ $(full_target): PRIVATE_LOCAL_PATH := $(LOCAL_PATH)
 html_dir_files := $(shell find $(LOCAL_PATH)/$(LOCAL_DROIDDOC_HTML_DIR) -type f)
 
 $(full_target): $(full_src_files) $(droiddoc_templates) $(droiddoc) $(html_dir_files) $(full_java_lib_deps) $(LOCAL_ADDITIONAL_DEPENDENCIES)
-	@echo -e ${PRT_HST}"Docs droiddoc:"${CL_RST}" $(PRIVATE_OUT_DIR)"
+	@echo Docs droiddoc: $(PRIVATE_OUT_DIR)
 	$(hide) mkdir -p $(dir $@)
 	$(call prepare-doc-source-list,$(PRIVATE_SRC_LIST_FILE),$(PRIVATE_JAVA_FILES), \
 			$(PRIVATE_SOURCE_INTERMEDIATES_DIR) $(PRIVATE_ADDITIONAL_JAVA_DIR))
@@ -192,7 +187,7 @@ else
 ##
 ##
 $(full_target): $(full_src_files) $(full_java_lib_deps)
-	@echo -e ${PRT_HST}"Docs javadoc:"${CL_RST}" $(PRIVATE_OUT_DIR)"
+	@echo Docs javadoc: $(PRIVATE_OUT_DIR)
 	@mkdir -p $(dir $@)
 	$(call prepare-doc-source-list,$(PRIVATE_SRC_LIST_FILE),$(PRIVATE_JAVA_FILES), \
 			$(PRIVATE_SOURCE_INTERMEDIATES_DIR) $(PRIVATE_ADDITIONAL_JAVA_DIR))
@@ -206,6 +201,7 @@ $(full_target): $(full_src_files) $(full_java_lib_deps)
                 -J-Xmx1024m \
                 $(PRIVATE_PROFILING_OPTIONS) \
                 $(addprefix -classpath ,$(PRIVATE_CLASSPATH)) \
+                $(addprefix -bootclasspath ,$(PRIVATE_BOOTCLASSPATH)) \
                 -sourcepath $(PRIVATE_SOURCE_PATH)$(addprefix :,$(PRIVATE_CLASSPATH)) \
                 -d $(PRIVATE_OUT_DIR) \
                 -quiet \
@@ -232,7 +228,7 @@ ifeq ($(strip $(LOCAL_UNINSTALLABLE_MODULE)),)
 out_zip := $(OUT_DOCS)/$(LOCAL_MODULE)-docs.zip
 $(out_zip): PRIVATE_DOCS_DIR := $(out_dir)
 $(out_zip): $(full_target)
-	@echo -e ${PRT_HST}"Package docs:"${CL_RST}" $@"
+	@echo Package docs: $@
 	@rm -f $@
 	@mkdir -p $(dir $@)
 	$(hide) ( F=$$(pwd)/$@ ; cd $(PRIVATE_DOCS_DIR) && zip -rq $$F * )
