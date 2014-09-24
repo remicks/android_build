@@ -4,7 +4,7 @@ SDK_VER=19
 CUSTOM_VER=119
 CUSTOM_NAME=plain
 
-. ${ANDROID_BUILD_TOP}/vendor/aokp/tools/colors
+. ${ANDROID_BUILD_TOP}/vendor/plain/tools/colors
 
 if [ -z "$OUT" ]; then
     echo -e $CL_RED"Please lunch a product before using this command"$CL_RST

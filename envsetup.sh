@@ -17,8 +17,6 @@ Invoke ". build/envsetup.sh" from your shell to add the following functions to y
 - mka:      Builds using SCHED_BATCH on all processors
 - mbot:     Builds for all devices using the psuedo buildbot
 - mkapush:  Same as mka with the addition of adb pushing to the device.
-- pstest:   cherry pick a patch from the PLAIN gerrit instance.
-- pspush:   push commit to PLAIN gerrit instance.
 - taco:     Builds for a single device using the pseudo buildbot
 - reposync: Parallel repo sync using ionice and SCHED_BATCH
 - addaosp:  Add git remote for the AOSP repository
@@ -559,17 +557,6 @@ function lunch()
     check_product $product
     if [ $? -ne 0 ]
     then
-        # if we can't find a product, try to grab it off the CM github
-        T=$(gettop)
-        pushd $T > /dev/null
-        build/tools/roomservice.py $product
-        popd > /dev/null
-        check_product $product
-    else
-        build/tools/roomservice.py $product true
-    fi
-    if [ $? -ne 0 ]
-    then
         echo
         echo "** Don't have a product spec for: '$product'"
         echo "** Do you have the right repo manifest?"
@@ -700,6 +687,8 @@ EOF
     fi
     return $?
 }
+
+
 
 function gettop
 {
@@ -1536,67 +1525,6 @@ function mkapush() {
     esac
 }
 
-function pstest() {
-    if [ -z "$1" ] || [ "$1" = '--help' ]
-    then
-        echo "pstest"
-        echo "to use: pstest PATCH_ID/PATCH_SET"
-        echo "example: pstest 5555/5"
-        exit 0
-    fi
-
-    gerrit=gerrit.plain.co
-    project=`git config --get remote.plain.projectname`
-    patch="$1"
-    submission=`echo $patch | cut -f1 -d "/" | tail -c 3`
-
-    if [[ "$patch" != */* ]]
-    then
-        # User did not specify revision - pull latest
-        output=$( git ls-remote http://$gerrit/$project | grep /changes/$submission/$patch )
-        refchanges=$( echo "$output" | awk '{print $2}' )
-        latest=0
-
-        echo "$refchanges" | {
-            while read line; do
-                patchNum=${line##*/*/*/*/}
-                if [ $patchNum -gt $latest ]; then
-                    latest=$patchNum
-                fi
-            done
-            git fetch http://$gerrit/$project refs/changes/$submission/$patch/$latest && git cherry-pick FETCH_HEAD
-        }
-    else
-        git fetch http://$gerrit/$project refs/changes/$submission/$patch && git cherry-pick FETCH_HEAD
-    fi
-}
-
-function pspush_error() {
-        echo "Requires ~/.ssh/config setup with the the following info:"
-        echo "      Host gerrit"
-        echo "        HostName gerrit.plain.co"
-        echo "        User <your username>"
-        echo "        Port 29418"
-}
-
-function pspush() {
-    if [ -z "$1" ] || [ "$1" = '--help' ]; then
-        echo "pspush"
-        echo "to use:  pspush STATUS"
-        echo "where STATUS: for=regular; drafts=draft; heads=pushed to github"
-        echo "example: pspush for"
-    else
-        checkSshConfig=` grep -rH "gerrit.plain.co" ~/.ssh/config `
-        if [ "$checkSshConfig" != "" ]; then
-            gerrit=gerrit.plain.co
-            project=` git config --get remote.plain.projectname`
-            status="$1"
-            git push gerrit:/$project HEAD:refs/$status/kitkat
-        else
-            pspush_error
-        fi
-    fi
-}
 
 function taco() {
     for sauce in "$@"

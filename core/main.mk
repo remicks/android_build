@@ -155,14 +155,7 @@ endif
 # Check for the correct version of java
 java_version := $(shell java -version 2>&1 | head -n 1 | grep '^java .*[ "]1\.[67][\. "$$]')
 ifneq ($(shell java -version 2>&1 | grep -i openjdk),)
-$(warning ************************************************************)
-$(warning AOSP errors out when using OpenJDK, saying you need to use)
-$(warning Java SE 1.6 instead.)
-$(warning A build with OpenJDK seems to work fine though - if you)
-$(warning run into any Java errors, you may want to try using the)
-$(warning version required by AOSP though.)
-$(warning ************************************************************)
-#java_version :=
+java_version :=
 endif
 ifeq ($(strip $(java_version)),)
 $(info ************************************************************)
@@ -190,7 +183,7 @@ $(info $(space))
 $(info Please follow the machine setup instructions at)
 $(info $(space)$(space)$(space)$(space)https://source.android.com/source/download.html)
 $(info ************************************************************)
-#$(error stop)
+$(error stop)
 endif
 
 # We're Unicorns. We use magic. Not emulators.
@@ -920,7 +913,7 @@ $(foreach module,$(sample_MODULES),$(eval $(call \
 sample_ADDITIONAL_INSTALLED := \
         $(filter-out $(modules_to_install) $(modules_to_check) $(ALL_PREBUILT),$(sample_MODULES))
 samplecode: $(sample_APKS_COLLECTION)
-	@echo "Collect sample code apks: $^"
+	@echo -e ${CL_GRN}"Collect sample code apks:"${CL_RST}" $^"
 	# remove apks that are not intended to be installed.
 	rm -f $(sample_ADDITIONAL_INSTALLED)
 
@@ -930,7 +923,7 @@ findbugs: $(INTERNAL_FINDBUGS_HTML_TARGET) $(INTERNAL_FINDBUGS_XML_TARGET)
 .PHONY: clean
 clean:
 	@rm -rf $(OUT_DIR)/*
-	@echo "Entire build directory removed."
+	@echo -e ${CL_GRN}"Entire build directory removed."${CL_RST}
 
 .PHONY: clobber
 clobber: clean
@@ -940,7 +933,7 @@ clobber: clean
 #xxx scrape this from ALL_MODULE_NAME_TAGS
 .PHONY: modules
 modules:
-	@echo "Available sub-modules:"
+	@echo -e ${CL_GRN}"Available sub-modules:"${CL_RST}
 	@echo "$(call module-names-for-tag-list,$(ALL_MODULE_TAGS))" | \
 	      tr -s ' ' '\n' | sort -u | $(COLUMN)
 

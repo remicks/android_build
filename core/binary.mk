@@ -142,21 +142,6 @@ ifeq ($(strip $(LOCAL_ENABLE_APROF)),true)
   LOCAL_CPPFLAGS += -fno-omit-frame-pointer -fno-function-sections -pg
 endif
 
-####################################################
-## Add LTO flags if LTO is turned on, supported,
-# clang is not used for the module, and the module
-# is a target module
-####################################################
-ifeq ($(strip $(LOCAL_NO_LTO_SUPPORT)),)
-  ifeq ($(strip $(LOCAL_STOCK_CLANG)),)
-    ifeq ($(strip $(LOCAL_IS_HOST_MODULE)),)
-      LOCAL_CFLAGS += $(TARGET_LTO_CFLAGS)
-      LOCAL_CPPFLAGS += $(TARGET_LTO_CFLAGS)
-      LOCAL_LDFLAGS += $(TARGET_LTO_CFLAGS)
-    endif
-  endif
-endif
-
 ###########################################################
 ## Explicitly declare assembly-only __ASSEMBLY__ macro for
 ## assembly source
@@ -601,7 +586,7 @@ import_includes_deps := $(strip \
     $(foreach l, $(LOCAL_STATIC_LIBRARIES) $(LOCAL_WHOLE_STATIC_LIBRARIES), \
       $(call intermediates-dir-for,STATIC_LIBRARIES,$(l),$(LOCAL_IS_HOST_MODULE))/export_includes))
 $(import_includes) : $(import_includes_deps)
-	@echo Import includes file: $@
+	@echo -e ${CL_CYN}Import includes file:${CL_RST} $@
 	$(hide) mkdir -p $(dir $@) && rm -f $@
 ifdef import_includes_deps
 	$(hide) for f in $^; do \
@@ -781,7 +766,7 @@ $(LOCAL_INSTALLED_MODULE): | $(installed_static_library_notice_file_targets)
 export_includes := $(intermediates)/export_includes
 $(export_includes): PRIVATE_EXPORT_C_INCLUDE_DIRS := $(LOCAL_EXPORT_C_INCLUDE_DIRS)
 $(export_includes) : $(LOCAL_MODULE_MAKEFILE)
-	@echo Export includes file: $< -- $@
+	@echo -e ${CL_CYN}Export includes file:${CL_RST} $< -- $@
 	$(hide) mkdir -p $(dir $@) && rm -f $@
 ifdef LOCAL_EXPORT_C_INCLUDE_DIRS
 	$(hide) for d in $(PRIVATE_EXPORT_C_INCLUDE_DIRS); do \
