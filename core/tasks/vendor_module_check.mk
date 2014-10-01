@@ -52,32 +52,7 @@ $(if $(_ersl_new_modules),$(eval _vendor_check_modules += $(_ersl_new_modules))\
 endef
 $(call expand-required-shared-libraries,$(_vendor_check_modules))
 
-_vendor_module_owner_info :=
-# Restrict owners
-ifneq (,$(filter true owner all, $(PRODUCTS.$(INTERNAL_PRODUCT).PRODUCT_RESTRICT_VENDOR_FILES)))
 
-ifneq (,$(filter vendor/%, $(PRODUCT_PACKAGE_OVERLAYS) $(DEVICE_PACKAGE_OVERLAYS)))
-$(error Error: Product "$(TARGET_PRODUCT)" cannot have overlay in vendor tree: \
-    $(filter vendor/%, $(PRODUCT_PACKAGE_OVERLAYS) $(DEVICE_PACKAGE_OVERLAYS)))
-endif
-_vendor_check_copy_files := $(filter vendor/%, $(PRODUCT_COPY_FILES))
-ifneq (,$(_vendor_check_copy_files))
-$(foreach c, $(_vendor_check_copy_files), \
-  $(if $(filter $(_vendor_owner_whitelist), $(call word-colon,3,$(c))),,\
-    $(error Error: vendor PRODUCT_COPY_FILES file "$(c)" has unknown owner))\
-  $(eval _vendor_module_owner_info += $(call word-colon,2,$(c)):$(call word-colon,3,$(c))))
-endif
-_vendor_check_copy_files :=
-
-$(foreach m, $(_vendor_check_modules), \
-  $(if $(filter vendor/%, $(ALL_MODULES.$(m).PATH)),\
-    $(if $(filter $(_vendor_owner_whitelist), $(ALL_MODULES.$(m).OWNER)),,\
-      $(error Error: vendor module "$(m)" in $(ALL_MODULES.$(m).PATH) with unknown owner \
-        "$(ALL_MODULES.$(m).OWNER)" in product "$(TARGET_PRODUCT)"))\
-    $(if $(ALL_MODULES.$(m).INSTALLED),\
-      $(eval _vendor_module_owner_info += $(patsubst $(PRODUCT_OUT)/%,%,$(ALL_MODULES.$(m).INSTALLED)):$(ALL_MODULES.$(m).OWNER)))))
-
-endif
 
 
 # Restrict paths
