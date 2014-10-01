@@ -9,8 +9,11 @@ ARCH_ARM_HAVE_NEON              := true
 ifeq ($(TARGET_CPU_VARIANT),$(filter $(TARGET_CPU_VARIANT),cortex-a15 krait))
 	arch_variant_cflags := -mcpu=cortex-a15 -mfpu=neon-vfpv4
 else
-ifeq ($(strip $(TARGET_CPU_VARIANT)),cortex-a9)
-	arch_variant_cflags := -mcpu=cortex-a9 -mfpu=neon
+ifeq ($(strip $(TARGET_CPU_VARIANT)),cortex-a8)
+	arch_variant_cflags := -mcpu=cortex-a8
+ifeq ($(USE_ARCH_OPTIMIZATIONS),true)
+	arch_variant_ldflags := -Wl,--fix-cortex-a8
+endif
 else
 ifeq ($(strip $(TARGET_CPU_VARIANT)),cortex-a8)
 	arch_variant_cflags := -mcpu=cortex-a8 -mfpu=neon
@@ -35,5 +38,13 @@ endif
 arch_variant_cflags += \
     -mfloat-abi=softfp
 
+ifeq ($(USE_ARCH_OPTIMIZATIONS),true)
+else
+ifneq (,$(findstring cpu=cortex-a9,$(TARGET_EXTRA_CFLAGS)))
+arch_variant_ldflags := \
+	-Wl,--no-fix-cortex-a8
+else
 arch_variant_ldflags := \
 	-Wl,--fix-cortex-a8
+endif
+endif
