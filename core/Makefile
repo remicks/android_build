@@ -1446,7 +1446,7 @@ $(INTERNAL_OTA_PACKAGE_TARGET): $(BUILT_TARGET_FILES_PACKAGE) $(DISTTOOLS)
 BOOT_ZIP_FROM_IMAGE_SCRIPT := ./build/tools/releasetools/boot_flash_from_image
 KERNEL_PATH := $(TARGET_KERNEL_SOURCE)/arch/arm/configs/$(TARGET_KERNEL_CONFIG)
 
-.PHONY: bootzip otapackage bacon
+.PHONY: bootzip otapackage bacon coffee
 bootzip: bootimage
 	$(BOOT_ZIP_FROM_IMAGE_SCRIPT) \
 	   $(recovery_fstab) \
@@ -1462,6 +1462,9 @@ ifneq ($(TARGET_CUSTOM_RELEASETOOL),)
 else
 	$(hide) ./vendor/plain/tools/squisher
 endif
+
+coffee: otapackage
+	$(hide) ./vendor/plain/tools/squisher aroma
 
 # -----------------------------------------------------------------
 # The update package
