@@ -541,6 +541,7 @@ else if get_stage("%(bcb_dev)s", "stage") == "3/3" then
   script.Print("Making it Plain...")
   script.UnpackPackageDir("system", "/system")
   script.Comment("@AROMASCRIPT@")
+  script.Comment("@AROMA_DEVICE_SCRIPT@")
   symlinks = CopySystemFiles(input_zip, output_zip)
   script.Print("Linking your Syms...")
   script.MakeSymlinks(symlinks)
