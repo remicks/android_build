@@ -1607,6 +1607,10 @@ function set_java_home() {
     fi
 }
 
+function monthly_changelog() {
+	sh vendor/plain/utils/changelog_gen.sh $(date -d "1 month ago" '+%m-%d-%Y') > /dev/null
+}
+
 # Print colored exit condition
 function pez {
     "$@"
