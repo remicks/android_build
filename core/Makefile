@@ -1466,6 +1466,10 @@ endif
 coffee: otapackage
 	$(hide) ./vendor/plain/tools/squisher aroma
 
+latte: otapackage
+	$(hide) ./vendor/plain/tools/squisher
+	$(hide) ./vendor/plain/tools/squisher aroma
+
 # -----------------------------------------------------------------
 # The update package
 
