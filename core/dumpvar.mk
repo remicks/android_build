@@ -1,6 +1,15 @@
 # ---------------------------------------------------------------
 # the setpath shell function in envsetup.sh uses this to figure out
 # what to add to the path given the config we have chosen.
+ifneq ($(BUILD_WITH_COLORS),0)
+  CL_RED="\033[31m"
+  CL_GRN="\033[32m"
+  CL_YLW="\033[33m"
+  CL_BLU="\033[34m"
+  CL_MAG="\033[35m"
+  CL_CYN="\033[36m"
+  CL_RST="\033[0m"
+endif
 ifeq ($(CALLED_FROM_SETUP),true)
 
 ifneq ($(filter /%,$(HOST_OUT_EXECUTABLES)),)
@@ -89,27 +98,40 @@ endif # CALLED_FROM_SETUP
 
 ifneq ($(PRINT_BUILD_CONFIG),)
 HOST_OS_EXTRA:=$(shell python -c "import platform; print(platform.platform())")
-$(info ============================================)
-$(info   PLATFORM_VERSION_CODENAME=$(PLATFORM_VERSION_CODENAME))
-$(info   PLATFORM_VERSION=$(PLATFORM_VERSION))
-$(info   TARGET_PRODUCT=$(TARGET_PRODUCT))
-$(info   TARGET_BUILD_VARIANT=$(TARGET_BUILD_VARIANT))
-$(info   TARGET_BUILD_TYPE=$(TARGET_BUILD_TYPE))
+$(info $(shell clear))
+$(info $(shell echo -e ${CL_CYN}=======================${CL_RST}))
+$(info $(shell echo ))
+$(info $(shell echo -e ${CL_CYN}Welcome to Plain-Andy${CL_RST}))
+$(info $(shell echo ))
+$(info $(shell echo -e ${CL_CYN}=======================${CL_RST}))
+$(info $(shell echo ))
+$(info $(shell sleep 1))
+$(info $(shell clear))
+$(info $(shell echo -e ${CL_CYN}============================================${CL_RST}))
+$(info   $(shell echo -e ${CL_YLW}ROM_BUILD_TYPE=${CL_RST})$(shell echo -e ${CL_CYN}$(ROM_BUILDTYPE)${CL_RST}))
+$(info   $(shell echo -e ${CL_YLW}PLATFORM_VERSION_CODENAME=${CL_RST})$(PLATFORM_VERSION_CODENAME))
+$(info   $(shell echo -e ${CL_YLW}PLATFORM_VERSION=${CL_RST})$(shell echo -e ${CL_GRN}$(PLATFORM_VERSION)${CL_RST}))
+$(info   $(shell echo -e ${CL_YLW}TARGET_PRODUCT=${CL_RST})$(shell echo -e ${CL_RED}$(TARGET_PRODUCT)${CL_RST}))
+$(info   $(shell echo -e ${CL_YLW}TARGET_BUILD_VARIANT=${CL_RST})$(TARGET_BUILD_VARIANT))
+$(info   $(shell echo -e ${CL_YLW}TARGET_BUILD_TYPE=${CL_RST})$(TARGET_BUILD_TYPE))
+ifneq ($(AROMA_BUILD),)
+$(info   $(shell echo -e ${CL_GRN}AROMA_BUILD=$(AROMA_BUILD)${CL_RST}))
+endif
 ifneq ($(strip $(TARGET_BUILD_APPS)),)
-$(info   TARGET_BUILD_APPS=$(TARGET_BUILD_APPS))
+$(info   $(shell echo -e ${CL_YLW}TARGET_BUILD_APPS=${CL_RST})$(TARGET_BUILD_APPS))
 endif
-$(info   TARGET_ARCH=$(TARGET_ARCH))
-$(info   TARGET_ARCH_VARIANT=$(TARGET_ARCH_VARIANT))
-$(info   TARGET_CPU_VARIANT=$(TARGET_CPU_VARIANT))
-$(info   HOST_ARCH=$(HOST_ARCH))
-$(info   HOST_OS=$(HOST_OS))
-$(info   HOST_OS_EXTRA=$(HOST_OS_EXTRA))
-$(info   HOST_BUILD_TYPE=$(HOST_BUILD_TYPE))
-$(info   BUILD_ID=$(BUILD_ID))
-$(info   OUT_DIR=$(OUT_DIR))
+$(info   $(shell echo -e ${CL_YLW}TARGET_ARCH=${CL_RST})$(TARGET_ARCH))
+$(info   $(shell echo -e ${CL_YLW}TARGET_ARCH_VARIANT=${CL_RST})$(TARGET_ARCH_VARIANT))
+$(info   $(shell echo -e ${CL_YLW}TARGET_CPU_VARIANT=${CL_RST})$(TARGET_CPU_VARIANT))
+$(info   $(shell echo -e ${CL_YLW}HOST_ARCH=${CL_RST})$(HOST_ARCH))
+$(info   $(shell echo -e ${CL_YLW}HOST_OS=${CL_RST})$(HOST_OS))
+$(info   $(shell echo -e ${CL_YLW}HOST_OS_EXTRA=${CL_RST})$(HOST_OS_EXTRA))
+$(info   $(shell echo -e ${CL_YLW}HOST_BUILD_TYPE=${CL_RST})$(HOST_BUILD_TYPE))
+$(info   $(shell echo -e ${CL_YLW}BUILD_ID=${CL_RST})$(BUILD_ID))
+$(info   $(shell echo -e ${CL_YLW}OUT_DIR=${CL_RST})$(OUT_DIR))
 ifneq ($(USE_CCACHE),)
-$(info   CCACHE_DIR=$(CCACHE_DIR))
-$(info   CCACHE_BASEDIR=$(CCACHE_BASEDIR))
+$(info   $(shell echo -e ${CL_YLW}CCACHE_DIR=$(CCACHE_DIR)${CL_RST}))
+$(info   $(shell echo -e ${CL_YLW}CCACHE_BASEDIR=$(CCACHE_BASEDIR)${CL_RST}))
 endif
-$(info ============================================)
+$(info $(shell echo -e ${CL_CYN}============================================${CL_RST}))
 endif

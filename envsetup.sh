@@ -647,7 +647,6 @@ function tapas()
     if [ -z "$apps" ]; then
         apps=all
     fi
-
     export TARGET_PRODUCT=$product
     export TARGET_BUILD_VARIANT=$variant
     export TARGET_BUILD_TYPE=release
@@ -1646,4 +1645,6 @@ done
 unset f
 
 addcompletions
+export ROM_BUILDTYPE=$ROM_BUILDTYPE
+export AROMA_BUILD=$AROMA_BUILD
 export ANDROID_BUILD_TOP=$(gettop)
