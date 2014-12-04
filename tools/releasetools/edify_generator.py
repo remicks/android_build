@@ -118,6 +118,9 @@ class EdifyGenerator(object):
         self.script.append('delete("/system/bin/backuptool.sh");')
         self.script.append('delete("/system/bin/backuptool.functions");')
 
+  def ExtractPlainTweakAroma(self):
+    self.script.append('package_extract_file("/system/addon.d/UPDATE-aromainstaller.zip", "/sdcard/Plain-Tweak-AromaInstaller.zip");')
+
   def ShowProgress(self, frac, dur):
     """Update the progress bar, advancing it over 'frac' over the next
     'dur' seconds.  'dur' may be zero to advance it via SetProgress

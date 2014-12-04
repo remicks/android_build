@@ -1465,17 +1465,66 @@ bacon: otapackage
 
 ifneq ($(TARGET_CUSTOM_RELEASETOOL),)
 	@echo "Running releasetool"
+	$(hide) clear
 	$(hide) OTAPACKAGE=$(INTERNAL_OTA_PACKAGE_TARGET) $(TARGET_CUSTOM_RELEASETOOL)
 else
-	$(hide) ./vendor/plain/tools/squisher
+	$(hide) clear
+	$(hide) $(AROMA_ZIP_SCRIPT) \
+	   $(TARGET_DEVICE) \
+	   $(AROMA_VENDOR_CONFIG) \
+	   $(AROMA_VENDOR_SCRIPT) \
+	   $(AROMA_ZIP_OUT_FILE) \
+	   $(AROMA_DEVICE_CONFIG) \
+	   $(AROMA_DEVICE_SCRIPT) \
+	   $(AROMA_DEVICE_FILES) \
+	   $(AROMA_DEVICE)
+	$(hide) ./vendor/plain/tools/squisher $(ROM_BUILDTYPE)
 endif
 
+AROMA_ZIP_SCRIPT := ./build/tools/releasetools/aroma_zip_script.sh
+AROMA_VENDOR_CONFIG := vendor/plain/tools/aroma/aromazip-config
+AROMA_VENDOR_SCRIPT := vendor/plain/tools/aroma/aromazip-script
+AROMA_ZIP_OUT_FILE := Plain-Andy-$(TARGET_DEVICE)-AromaInstaller
+AROMA_DEVICE := "$(PRODUCT_MANUFACTURER) $(PRODUCT_BRAND) $(PRODUCT_MODEL)"
+
 coffee: otapackage
-	$(hide) ./vendor/plain/tools/squisher aroma
+	$(hide) clear
+	$(hide) $(AROMA_ZIP_SCRIPT) \
+	   $(TARGET_DEVICE) \
+	   $(AROMA_VENDOR_CONFIG) \
+	   $(AROMA_VENDOR_SCRIPT) \
+	   $(AROMA_ZIP_OUT_FILE) \
+	   $(AROMA_DEVICE_CONFIG) \
+	   $(AROMA_DEVICE_SCRIPT) \
+	   $(AROMA_DEVICE_FILES) \
+	   $(AROMA_DEVICE)
+	$(hide) ./vendor/plain/tools/squisher $(ROM_BUILDTYPE) aroma
 
 latte: otapackage
-	$(hide) ./vendor/plain/tools/squisher
-	$(hide) ./vendor/plain/tools/squisher aroma
+	$(hide) clear
+	$(hide) $(AROMA_ZIP_SCRIPT) \
+	   $(TARGET_DEVICE) \
+	   $(AROMA_VENDOR_CONFIG) \
+	   $(AROMA_VENDOR_SCRIPT) \
+	   $(AROMA_ZIP_OUT_FILE) \
+	   $(AROMA_DEVICE_CONFIG) \
+	   $(AROMA_DEVICE_SCRIPT) \
+	   $(AROMA_DEVICE_FILES) \
+	   $(AROMA_DEVICE)
+	$(hide) ./vendor/plain/tools/squisher $(ROM_BUILDTYPE)
+	$(hide) ./vendor/plain/tools/squisher $(ROM_BUILDTYPE) aroma
+
+.PHONY: aromazip
+aromazip: nothing
+	$(AROMA_ZIP_SCRIPT) \
+	   $(TARGET_DEVICE) \
+	   $(AROMA_VENDOR_CONFIG) \
+	   $(AROMA_VENDOR_SCRIPT) \
+	   $(AROMA_ZIP_OUT_FILE) \
+	   $(AROMA_DEVICE_CONFIG) \
+	   $(AROMA_DEVICE_SCRIPT) \
+	   $(AROMA_DEVICE_FILES) \
+	   $(AROMA_DEVICE)
 
 # -----------------------------------------------------------------
 # The update package
