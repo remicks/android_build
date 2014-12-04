@@ -1,0 +1,154 @@
+### LICENSE:
+#
+# Copyright (C) 2011 Ahmad Amarullah ( http://amarullz.com/ )
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+exec("/sbin/busybox","mount","/system");
+exec("/sbin/busybox","mount","/data");
+ziptotmp("system/build.prop", "build.prop");
+ini_set("rom_name",             "Plain-Andy");
+ini_set("rom_version",          " "+prop("build.prop", "ro.modversion")+prop("build.prop", "rom.buildtype")+" "+prop("build.prop", "ro.plain.version"));
+ini_set("rom_author",           "Snuzzo");
+ini_set("rom_device",           " "+prop("build.prop", "ro.product.brand")+" "+prop("build.prop", "ro.product.model")+" ");
+
+ini_set("customkeycode_down",   "114");
+ini_set("customkeycode_select", "116");
+ini_set("customkeycode_menu",   "115");
+calibrate("1.2011","52","1.4256","45", "yes");
+##
+# Show Animated Splash
+#
+anisplash(
+#  #-- Number of Loop
+    4,
+  
+  #-- Frame 1 [ Image, duration in millisecond ]. <AROMA Resource Dir>/splash/a[1..6].png
+    "splash/a1", 500,
+    "splash/a2", 30,
+    "splash/a3", 30,
+    "splash/a4", 30,
+    "splash/a5", 30,
+    "splash/a6", 30
+);
+theme("touchwiz");
+#
+# Set Small Font to Support all fonts
+#
+fontresload( "0", "ttf/Roboto-Regular.ttf;ttf/DroidSansFallback.ttf;", "12" ); #-- Use sets of font (Font Family)
+fontresload( "1", "ttf/Roboto-Regular.ttf;ttf/DroidSansFallback.ttf;", "14" ); #-- Use sets of font (Font Family)
+
+viewbox(
+  "Welcome",
+    "\n\n\n\n"+
+    "You're about to flash : <#33b5e5>\n\n\t"+
+    ini_get("rom_name") + "</#>\n\n"+
+    "by : <#33b5e5>\n\n\t"+ 
+    ini_get("rom_author") + "</#>\n\n\n\n\n"+ 
+    "VERSION :\n\t<#33b5e5>" + ini_get("rom_version") + "</#>\n\n"+
+    "DEVICE :\n\t<#33b5e5>" + ini_get("rom_device") + "</#>\n\n"+
+    "ROM BUILD DATE :\n\t<#33b5e5>"+prop("build.prop", "ro.build.date")+"</#>\n\n\n\n\n\n"+
+    "\tPress Next to continue the installation...",
+  "icons/info"
+);
+textbox(
+    "Changelog",
+    "Plain-Changelog",
+    "@update",
+    resread("changelog.txt")
+);
+#@AROMA_DEVICE_CONFIG@
+checkbox(
+    "Customize System Apps",
+	"Please choose which apps to install",
+	"icons/install",
+	"systemapk.prop",
+		"Available Apps","",2,
+			"Browser",     "",1, #--item.1.1
+			"Calculator",     "",1, #--item.1.2
+			"Calendar",     "",0, #--item.1.3
+			"Desk Clock",     "",0, #--item.1.4
+			"Email",     "",0, #--item.1.5
+			"Live Wallpapers",     "",0, #--item.1.6
+			"Slim File Manager",     "",0 #--item.1.7
+);
+alert(
+    "Stock values:",
+	"LCD Density: "+prop("build.prop", "ro.sf.lcd_density")
+);
+writetmpfile("currentdensity.prop", "stockdensity="+prop("build.prop", "ro.sf.lcd_density"));
+selectbox(
+	"Plain-Tweak Build.prop Mods",
+		"Build.prop customization",
+		"@personalize",
+		"buildpropmods.prop",
+
+  	"LCD Density","",				2,	
+		"Stock","",				1,
+		"180","xhdpi/hdpi/tvdpi",		0,
+		"200","xhdpi/hdpi/tvdpi",		0,
+		"220","xhdpi/hdpi/tvdpi",		0,
+		"240","xhdpi/hdpi/tvdpi",		0,
+		"260","xhdpi/hdpi/tvdpi",		0,
+		"280","xxhdpi/xhdpi/hdpi/tvdpi",	0,
+		"300","xxhdpi/xhdpi/hdpi/tvdpi",	0,
+		"320","xxhdpi/xhdpi/hdpi/tvdpi",	0,
+		"340","xxhdpi/xhdpi/hdpi/tvdpi",	0,
+		"360","xxhdpi/xhdpi/hdpi/tvdpi",	0,
+		"380","xxhdpi/xhdpi/hdpi",		0,
+		"400","xxhdpi/xhdpi/hdpi",		0,
+		"420","xxhdpi/xhdpi/hdpi",		0,
+		"440","xxhdpi/xhdpi",			0,
+		"460","xxhdpi/xhdpi",			0,
+		"480","xxhdpi/xhdpi",			0,
+
+  	"Enable bootanimation?","",			2,
+		"Yes","",				1,
+		"No","",				0
+);
+
+viewbox(
+  "Ready To Install",
+  "All information has been collected for installation.\n\n"+
+  "Click Next To Start Installation. This is the last chance to cancel!",
+  "icons/info"
+);
+
+install(
+  "Installing",
+  "Installing " + ini_get("rom_name") + " " + ini_get("rom_version") + 
+  "...\nPlease Wait Until it's Finished...",
+  "redicons/install"
+);
+
+# Set Next Text fo Finish
+ini_set("text_next", "Finish");
+
+viewbox(
+  "Installation Completed",
+  "<#080>Congratulations...</#>\n\n"+
+   ini_get("rom_name") + " " + ini_get("rom_version") + " has been installed successfully.\n\n"+
+  "Press Finish, and Reboot your phone.",
+  "icons/info"
+);
+if
+  confirm(
+      "Reboot",
+      "Reboot Now",
+      "icons/info",
+      "Reboot",
+      "No"
+  )=="yes"
+then
+  reboot("onfinish");
+endif;

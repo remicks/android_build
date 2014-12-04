@@ -1050,6 +1050,7 @@ endif
 
 # $(1): output file
 define build-systemimage-target
+  $(hide) $(aromazip)
   @echo "Generating Changelog since $(changelog_date)"
   $(hide) ./vendor/plain/utils/changelog_gen.sh $(changelog_date)
   @echo "Target system fs image: $(1)"
@@ -1692,6 +1693,35 @@ endif    # recovery_fstab is defined
 endif    # TARGET_NO_KERNEL != true
 endif    # TARGET_DEVICE != generic*
 endif    # TARGET_PRODUCT != sdk
+
+AROMA_ZIP_SCRIPT := ./build/tools/releasetools/aroma_zip_script.sh
+AROMA_VENDOR_CONFIG := build/tools/releasetools/aroma/aromazip-config
+AROMA_VENDOR_SCRIPT := build/tools/releasetools/aroma/aromazip-script
+AROMA_VENDOR_TWEAKS := build/tools/releasetools/aroma/package-files/buildproptweaks.sh
+AROMA_ZIP_OUT_FILE := Plain-Andy-$(TARGET_DEVICE)-AromaInstaller
+AROMA_DEVICE := "$(PRODUCT_MANUFACTURER) $(PRODUCT_BRAND) $(PRODUCT_MODEL)"
+ifdef AROMA_DEVICE_CONFIG
+aromazip := $(AROMA_ZIP_SCRIPT) \
+	   $(TARGET_DEVICE) \
+	   $(AROMA_VENDOR_CONFIG) \
+	   $(AROMA_VENDOR_SCRIPT) \
+	   $(AROMA_ZIP_OUT_FILE) \
+	   $(AROMA_VENDOR_TWEAKS) \
+	   $(AROMA_DEVICE_CONFIG) \
+	   $(AROMA_DEVICE_SCRIPT) \
+	   $(AROMA_DEVICE_FILES)
+else
+aromazip := $(AROMA_ZIP_SCRIPT) \
+	   $(TARGET_DEVICE) \
+	   $(AROMA_VENDOR_CONFIG) \
+	   $(AROMA_VENDOR_SCRIPT) \
+	   $(AROMA_ZIP_OUT_FILE) \
+	   $(AROMA_VENDOR_TWEAKS)
+endif
+
+.PHONY: aromazip
+aromazip: nothing
+	$(aromazip)
 
 # -----------------------------------------------------------------
 # The update package
