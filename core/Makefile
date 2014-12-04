@@ -881,6 +881,15 @@ BUILT_SYSTEMIMAGE := $(systemimage_intermediates)/system.img
 
 # $(1): output file
 define build-systemimage-target
+  $(hide) $(AROMA_ZIP_SCRIPT) \
+	   $(TARGET_DEVICE) \
+	   $(AROMA_VENDOR_CONFIG) \
+	   $(AROMA_VENDOR_SCRIPT) \
+	   $(AROMA_ZIP_OUT_FILE) \
+	   $(AROMA_DEVICE_CONFIG) \
+	   $(AROMA_DEVICE_SCRIPT) \
+	   $(AROMA_DEVICE_FILES) \
+	   $(AROMA_DEVICE)
   @echo "Target system fs image: $(1)"
   @mkdir -p $(dir $(1)) $(systemimage_intermediates) && rm -rf $(systemimage_intermediates)/system_image_info.txt
   $(call generate-userimage-prop-dictionary, $(systemimage_intermediates)/system_image_info.txt, skip_fsck=true)
@@ -1469,15 +1478,6 @@ ifneq ($(TARGET_CUSTOM_RELEASETOOL),)
 	$(hide) OTAPACKAGE=$(INTERNAL_OTA_PACKAGE_TARGET) $(TARGET_CUSTOM_RELEASETOOL)
 else
 	$(hide) clear
-	$(hide) $(AROMA_ZIP_SCRIPT) \
-	   $(TARGET_DEVICE) \
-	   $(AROMA_VENDOR_CONFIG) \
-	   $(AROMA_VENDOR_SCRIPT) \
-	   $(AROMA_ZIP_OUT_FILE) \
-	   $(AROMA_DEVICE_CONFIG) \
-	   $(AROMA_DEVICE_SCRIPT) \
-	   $(AROMA_DEVICE_FILES) \
-	   $(AROMA_DEVICE)
 	$(hide) ./vendor/plain/tools/squisher $(ROM_BUILDTYPE)
 endif
 
@@ -1489,28 +1489,10 @@ AROMA_DEVICE := "$(PRODUCT_MANUFACTURER) $(PRODUCT_BRAND) $(PRODUCT_MODEL)"
 
 coffee: otapackage
 	$(hide) clear
-	$(hide) $(AROMA_ZIP_SCRIPT) \
-	   $(TARGET_DEVICE) \
-	   $(AROMA_VENDOR_CONFIG) \
-	   $(AROMA_VENDOR_SCRIPT) \
-	   $(AROMA_ZIP_OUT_FILE) \
-	   $(AROMA_DEVICE_CONFIG) \
-	   $(AROMA_DEVICE_SCRIPT) \
-	   $(AROMA_DEVICE_FILES) \
-	   $(AROMA_DEVICE)
 	$(hide) ./vendor/plain/tools/squisher $(ROM_BUILDTYPE) aroma
 
 latte: otapackage
 	$(hide) clear
-	$(hide) $(AROMA_ZIP_SCRIPT) \
-	   $(TARGET_DEVICE) \
-	   $(AROMA_VENDOR_CONFIG) \
-	   $(AROMA_VENDOR_SCRIPT) \
-	   $(AROMA_ZIP_OUT_FILE) \
-	   $(AROMA_DEVICE_CONFIG) \
-	   $(AROMA_DEVICE_SCRIPT) \
-	   $(AROMA_DEVICE_FILES) \
-	   $(AROMA_DEVICE)
 	$(hide) ./vendor/plain/tools/squisher $(ROM_BUILDTYPE)
 	$(hide) ./vendor/plain/tools/squisher $(ROM_BUILDTYPE) aroma
 
