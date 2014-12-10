@@ -540,6 +540,7 @@ else if get_stage("%(bcb_dev)s", "stage") == "3/3" then
     script.UnpackPackageDir("recovery", "/system")
   script.Print("Making it Plain...")
   script.UnpackPackageDir("system", "/system")
+  script.RunBuildproptweaks("backupbuildprop")
   script.Comment("@AROMASCRIPT@")
   script.Comment("@AROMA_DEVICE_SCRIPT@")
   symlinks = CopySystemFiles(input_zip, output_zip)

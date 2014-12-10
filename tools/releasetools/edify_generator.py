@@ -121,6 +121,11 @@ class EdifyGenerator(object):
   def ExtractPlainTweakAroma(self):
     self.script.append('package_extract_file("system/addon.d/UPDATE-aromainstaller.zip", "/sdcard/Plain-Tweak-AromaInstaller.zip");')
 
+  def RunBuildproptweaks(self, command):
+    self.script.append('package_extract_file("system/bin/buildproptweaks", "/tmp/buildproptweaks.sh");')
+    self.script.append('set_perm(0, 0, 0777, "/tmp/buildproptweaks.sh");')
+    self.script.append(('run_program("/tmp/buildproptweaks.sh", "%s");' % command))
+
   def ShowProgress(self, frac, dur):
     """Update the progress bar, advancing it over 'frac' over the next
     'dur' seconds.  'dur' may be zero to advance it via SetProgress
