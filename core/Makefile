@@ -1512,11 +1512,14 @@ aromazip: nothing
 ifeq ($(ROM_BUILDTYPE),Nightly)
 plain := bacon
 endif
-ifeq ($(ROM_BUILDTYPE),Experimental)
-plain := latte
+ifeq ($(ROM_BUILDTYPE),Release)
+plain := coffee
 endif
 ifeq ($(ROM_BUILDTYPE),Weekly)
 plain := coffee
+endif
+ifeq ($(ROM_BUILDTYPE),Experimental)
+plain := latte
 endif
 ifeq ($(ROM_BUILDTYPE),Unofficial)
 plain := latte
