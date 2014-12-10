@@ -4,7 +4,7 @@ DEVICE=$1
 AROMA_VENDOR_CONFIG=$2
 AROMA_VENDOR_SCRIPT=$3
 AROMA_ZIP_OUT_FILE=$4
-AROMA_DEVICE=$8
+AROMA_VENDOR_TWEAKS=$8
 SOURCE=$PWD
 UPDATER=$OUT/obj/EXECUTABLES/updater_intermediates/updater
 AROMADATE=$(date +"%Y-%m-%d")
@@ -29,6 +29,7 @@ echo 'run_program("/sbin/busybox", "mount", "/system");' >> $UPDATER_DIR/updater
 echo 'endif;' >> $UPDATER_DIR/updater-script
 
 unzip -q -o $ANDROID_BUILD_TOP/vendor/plain/tools/aroma/aroma.zip -d $ZIP_DIR
+cp $ANDROID_BUILD_TOP/$AROMA_VENDOR_TWEAKS $ZIP_DIR/buildproptweaks.sh
 cat $ANDROID_BUILD_TOP/$AROMA_VENDOR_SCRIPT >> $UPDATER_DIR/updater-script
 if [ -e $ANDROID_BUILD_TOP/$6 ]
 then
@@ -50,7 +51,6 @@ else
 rm -rf $ZIP_DIR
 continue
 fi
-sed -i -e "s|@AROMA_DEVICE@|$AROMA_DEVICE|" $UPDATER_DIR/aroma-config
 sed -i -e "s|@DATE@|$AROMADATE|" $UPDATER_DIR/aroma-config
 
 echo 'unmount("/system");' >> $UPDATER_DIR/updater-script

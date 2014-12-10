@@ -889,7 +889,7 @@ define build-systemimage-target
 	   $(AROMA_DEVICE_CONFIG) \
 	   $(AROMA_DEVICE_SCRIPT) \
 	   $(AROMA_DEVICE_FILES) \
-	   $(AROMA_DEVICE)
+	   $(AROMA_VENDOR_TWEAKS)
   @echo "Target system fs image: $(1)"
   @mkdir -p $(dir $(1)) $(systemimage_intermediates) && rm -rf $(systemimage_intermediates)/system_image_info.txt
   $(call generate-userimage-prop-dictionary, $(systemimage_intermediates)/system_image_info.txt, skip_fsck=true)
@@ -1484,6 +1484,7 @@ endif
 AROMA_ZIP_SCRIPT := ./build/tools/releasetools/aroma_zip_script.sh
 AROMA_VENDOR_CONFIG := vendor/plain/tools/aroma/aromazip-config
 AROMA_VENDOR_SCRIPT := vendor/plain/tools/aroma/aromazip-script
+AROMA_VENDOR_TWEAKS := vendor/plain/prebuilt/bin/buildproptweaks.sh
 AROMA_ZIP_OUT_FILE := Plain-Andy-$(TARGET_DEVICE)-AromaInstaller
 AROMA_DEVICE := "$(PRODUCT_MANUFACTURER) $(PRODUCT_BRAND) $(PRODUCT_MODEL)"
 
@@ -1506,7 +1507,7 @@ aromazip: nothing
 	   $(AROMA_DEVICE_CONFIG) \
 	   $(AROMA_DEVICE_SCRIPT) \
 	   $(AROMA_DEVICE_FILES) \
-	   $(AROMA_DEVICE)
+	   $(AROMA_VENDOR_TWEAKS)
 
 ifeq ($(ROM_BUILDTYPE),Nightly)
 plain := bacon
