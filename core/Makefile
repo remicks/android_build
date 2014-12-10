@@ -1509,24 +1509,6 @@ aromazip: nothing
 	   $(AROMA_DEVICE_FILES) \
 	   $(AROMA_VENDOR_TWEAKS)
 
-ifeq ($(ROM_BUILDTYPE),Nightly)
-plain := bacon
-endif
-ifeq ($(ROM_BUILDTYPE),Release)
-plain := coffee
-endif
-ifeq ($(ROM_BUILDTYPE),Weekly)
-plain := coffee
-endif
-ifeq ($(ROM_BUILDTYPE),Experimental)
-plain := latte
-endif
-ifeq ($(ROM_BUILDTYPE),Unofficial)
-plain := latte
-endif
-ifeq ($(ROM_BUILDTYPE)-Aroma,$(ROM_BUILDTYPE))
-plain := latte
-endif
 .PHONY: plain
 plain: $(plain)
 
