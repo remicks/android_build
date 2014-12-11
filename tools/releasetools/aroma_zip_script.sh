@@ -4,7 +4,18 @@ DEVICE=$1
 AROMA_VENDOR_CONFIG=$2
 AROMA_VENDOR_SCRIPT=$3
 AROMA_ZIP_OUT_FILE=$4
-AROMA_VENDOR_TWEAKS=$8
+AROMA_VENDOR_TWEAKS=$5
+AROMA_DEVICE_CONFIG=$6
+AROMA_DEVICE_SCRIPT=$7
+AROMA_DEVICE_FILES=$8
+if [ -n "$AROMA_DEVICE_FILES" ]
+then
+AROMA_DEVICE=yes
+echo "$AROMA_DEVICE your device is awesome, lets build a full overlay"
+else
+AROMA_DEVICE=no
+echo "$AROMA_DEVICE this device doesnt have an aroma overlay"
+fi
 SOURCE=$PWD
 UPDATER=$OUT/obj/EXECUTABLES/updater_intermediates/updater
 AROMADATE=$(date +"%Y-%m-%d")
@@ -31,27 +42,17 @@ echo 'endif;' >> $UPDATER_DIR/updater-script
 unzip -q -o $ANDROID_BUILD_TOP/vendor/plain/tools/aroma/aroma.zip -d $ZIP_DIR
 cp $ANDROID_BUILD_TOP/$AROMA_VENDOR_TWEAKS $ZIP_DIR/buildproptweaks.sh
 cat $ANDROID_BUILD_TOP/$AROMA_VENDOR_SCRIPT >> $UPDATER_DIR/updater-script
-if [ -e $ANDROID_BUILD_TOP/$6 ]
-then
-cat $ANDROID_BUILD_TOP/$6 >> $UPDATER_DIR/updater-script
-else
-rm -rf $ZIP_DIR
-continue
-fi
-cd $UPDATER_DIR
 cp $ANDROID_BUILD_TOP/$AROMA_VENDOR_CONFIG $UPDATER_DIR/aroma-config
-if [ -e $ANDROID_BUILD_TOP/$5 ]
+
+if [ "$AROMA_DEVICE" == "yes" ]
 then
-awk '/#@AROMA_DEVICE_CONFIG@/{system("cat '$ANDROID_BUILD_TOP/$5'");next}1' $UPDATER_DIR/aroma-config > $UPDATER_DIR/temp
+cat $ANDROID_BUILD_TOP/$AROMA_DEVICE_SCRIPT >> $UPDATER_DIR/updater-script
+awk '/#@AROMA_DEVICE_CONFIG@/{system("cat '$ANDROID_BUILD_TOP/$AROMA_DEVICE_CONFIG'");next}1' $UPDATER_DIR/aroma-config > $UPDATER_DIR/temp
 rm $UPDATER_DIR/aroma-config
 mv $UPDATER_DIR/temp $UPDATER_DIR/aroma-config
 mkdir -p $ZIP_DIR/aroma_device
-cp -r $ANDROID_BUILD_TOP/$7/* $ZIP_DIR/aroma_device/
-else
-rm -rf $ZIP_DIR
-continue
+cp -r $ANDROID_BUILD_TOP/$AROMA_DEVICE_FILES/* $ZIP_DIR/aroma_device/
 fi
-sed -i -e "s|@DATE@|$AROMADATE|" $UPDATER_DIR/aroma-config
 
 echo 'unmount("/system");' >> $UPDATER_DIR/updater-script
 echo 'ui_print(" ");' >> $UPDATER_DIR/updater-script
@@ -67,4 +68,4 @@ rm ./$AROMA_ZIP_OUT_FILE.zip
 md5sum $AROMA_ZIP_OUT_FILE-signed.zip
 mkdir -p $OUT/system/addon.d
 cp $AROMA_ZIP_OUT_FILE-signed.zip $OUT/system/addon.d/UPDATE-aromainstaller.zip
-cd $SOURCE
+cd $SOURCEls
