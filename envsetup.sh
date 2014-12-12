@@ -22,7 +22,6 @@ Invoke ". build/envsetup.sh" from your shell to add the following functions to y
 - aospremote: Add git remote for matching AOSP repository
 - cafremote: Add git remote for matching CodeAurora repository.
 - cmremote: Add a git remote for matching CM repository.
-- aicpremote: Add a git remote for matching AICP repository.
 - mka:      Builds using SCHED_BATCH on all processors
 - reposync: Parallel repo sync using ionice and SCHED_BATCH
 
@@ -70,12 +69,12 @@ function check_product()
         return
     fi
 
-    if (echo -n $1 | grep -q -e "^aicp_") ; then
-       AICP_PRODUCT=$(echo -n $1 | sed -e 's/^aicp_//g')
+    if (echo -n $1 | grep -q -e "^plain_") ; then
+       PLAIN_PRODUCT=$(echo -n $1 | sed -e 's/^plain_//g')
     else
-       AICP_PRODUCT=
+       PLAIN_PRODUCT=
     fi
-    export AICP_PRODUCT
+    export PLAIN_PRODUCT
 
         TARGET_PRODUCT=$1 \
         TARGET_BUILD_VARIANT= \
@@ -534,10 +533,10 @@ function breakfast()
 {
     target=$1
     local variant=$2
-    AICP_DEVICES_ONLY="true"
+    PLAIN_DEVICES_ONLY="true"
     unset LUNCH_MENU_CHOICES
     add_lunch_combo full-eng
-    for f in `/bin/ls vendor/aicp/vendorsetup.sh 2> /dev/null`
+    for f in `/bin/ls vendor/plain/vendorsetup.sh 2> /dev/null`
         do
 echo "including $f"
             . $f
@@ -553,11 +552,11 @@ echo "z$target" | grep -q "-"
             # A buildtype was specified, assume a full device name
             lunch $target
         else
-            # This is probably just the AICP model name
+            # This is probably just the Plain model name
             if [ -z "$variant" ]; then
                 variant="userdebug"
             fi
-            lunch aicp_$target-$variant
+            lunch plain_$target-$variant
         fi
 fi
 return $?
@@ -604,7 +603,7 @@ function lunch()
     check_product $product
     if [ $? -ne 0 ]
     then
-        # if we can't find a product, try to grab it off the AICP github
+        # if we can't find a product, try to grab it off the Plain github
         T=$(gettop)
         pushd $T > /dev/null
         build/tools/roomservice.py $product
@@ -710,7 +709,7 @@ function mmmp()
         return 1
     fi
 
-    # Get product name from aicp_<product>
+    # Get product name from plain_<product>
     PRODUCT=`echo $TARGET_PRODUCT | tr "_" "\n" | tail -n 1`
 
     adb start-server # Prevent unexpected starting server message from adb get-state in the next line
@@ -1603,27 +1602,6 @@ function cmremote()
     PFX="android_$(echo $PROJECT | sed 's/\//_/g')"
     git remote add cm git@github.com:CyanogenMod/$PFX
     echo "Remote 'cm' created"
-}
-
-function aicpremote()
-{
-    git remote rm aicp 2> /dev/null
-    PFX=""
-    if [ ! -d .git ]
-    then
-        echo .git directory not found. Please run this from the root directory of the Android repository you wish to set up.
-    else
-    PROJ=`pwd -P | sed s#$ANDROID_BUILD_TOP/##g`
-
-    if (echo $PROJ | egrep -q 'external|system|build|bionic|art|libcore|prebuilt|dalvik') ; then
-        PFX="android_"
-    fi
-
-    PROJECT="$(echo $PROJ | sed 's/\//_/g')"
-
-    git remote add aicp git@github.com:AICP/$PFX$PROJECT
-    echo "Remote 'aicp' created"
-    fi
 }
 
 function repodiff() {

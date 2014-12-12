@@ -17,7 +17,7 @@ endif
 LOCAL_PATH := $(BUILD_SYSTEM)
 
 # Pick a reasonable string to use to identify files.
-ifneq ($(AICP_PRODUCT),)
+ifneq ($(PLAIN_PRODUCT),)
 ifneq "" "$(filter eng.%,$(BUILD_NUMBER))"
   # BUILD_NUMBER has a timestamp in it, which means that
   # it will change every time.  Pick a stable value.
@@ -222,7 +222,7 @@ ifneq ($(PRODUCTS.$(INTERNAL_PRODUCT).PRODUCT_OEM_PROPERTIES),)
 endif
 	$(hide) TARGET_BUILD_TYPE="$(TARGET_BUILD_VARIANT)" \
 			TARGET_DEVICE="$(TARGET_VENDOR_DEVICE_NAME)" \
-			AICP_DEVICE="$(TARGET_DEVICE)" \
+			PLAIN_DEVICE="$(TARGET_DEVICE)" \
 			PRODUCT_NAME="$(TARGET_VENDOR_PRODUCT_NAME)" \
 			PRODUCT_BRAND="$(PRODUCT_BRAND)" \
 			PRODUCT_DEFAULT_LANGUAGE="$(call default-locale-language,$(PRODUCT_LOCALES))" \
@@ -1627,12 +1627,12 @@ else
     OTA_FROM_TARGET_SCRIPT := $(TARGET_RELEASETOOL_OTA_FROM_TARGET_SCRIPT)
 endif
 
-AICP_TARGET_PACKAGE := $(PRODUCT_OUT)/$(AICP_VERSION).zip
+PLAIN_TARGET_PACKAGE := $(PRODUCT_OUT)/$(PLAIN_VERSION).zip
 
 BOOT_ZIP_FROM_IMAGE_SCRIPT := ./build/tools/releasetools/boot_flash_from_image
 KERNEL_PATH := $(TARGET_KERNEL_SOURCE)/arch/arm/configs/$(TARGET_KERNEL_CONFIG)
 
-ifneq ($(AICP_PRODUCT),)
+ifneq ($(PLAIN_PRODUCT),)
     $(INTERNAL_OTA_PACKAGE_TARGET): backuptool := true
 else
     $(INTERNAL_OTA_PACKAGE_TARGET): backuptool := false
@@ -1658,7 +1658,7 @@ $(INTERNAL_OTA_PACKAGE_TARGET): $(BUILT_TARGET_FILES_PACKAGE) $(DISTTOOLS)
 	$(hide) MKBOOTIMG=$(MKBOOTIMG) \
 	   CUSTOM_BOOTING_MK=$(BOARD_CUSTOM_BOOTIMG_MK) \
 	   $(OTA_FROM_TARGET_SCRIPT) -v \
-	   $(if $(AICP_PRODUCT), --block) \
+	   $(if $(PLAIN_PRODUCT), --block) \
 	   -p $(HOST_OUT) \
 	   -k $(KEY_CERT_PAIR) \
 	   $(if $(OEM_OTA_CONFIG), -o $(OEM_OTA_CONFIG)) \
@@ -1671,29 +1671,14 @@ otapackage: $(INTERNAL_OTA_PACKAGE_TARGET)
 
 bacon: otapackage
 
-	$(hide) find $(PRODUCT_OUT) -maxdepth 1 -xdev -samefile $(INTERNAL_OTA_PACKAGE_TARGET) | grep -v ota-eng | xargs rm -f
-	$(hide) rm -f $(PRODUCT_OUT)/*.md5sum
-	$(hide) ln -f $(INTERNAL_OTA_PACKAGE_TARGET) $(AICP_TARGET_PACKAGE)
-	$(hide) (cd `dirname $(AICP_TARGET_PACKAGE)` && $(MD5SUM) `basename $(AICP_TARGET_PACKAGE)` > $(AICP_TARGET_PACKAGE).md5sum)
-	@echo -e ""
-	@echo -e ${CL_RED}"      ___"${CL_CYN}"                        ___"${CL_BLU}"            ___"${CL_RST}
-	@echo -e ${CL_RED}"     /\  \ "${CL_CYN}"                     /\__\ "${CL_BLU}"         /\  \ "${CL_RST}
-	@echo -e ${CL_RED}"    /::\  \ "${CL_MAG}"       ___"${CL_CYN}"         /:/  / "${CL_BLU}"        /::\  \ "${CL_RST}
-	@echo -e ${CL_RED}"   /:/\:\  \ "${CL_MAG}"     /\__\ "${CL_CYN}"      /:/  / "${CL_BLU}"        /:/\:\__\ "${CL_RST}
-	@echo -e ${CL_RED}"  /:/ /::\  \ "${CL_MAG}"   /:/__/ "${CL_CYN}"     /:/  /  ___"${CL_BLU}"    /:/ /:/  / "${CL_RST}
-	@echo -e ${CL_RED}" /:/_/:/\:\__\ "${CL_MAG}" /::\  \ "${CL_CYN}"    /:/__/  /\__\ "${CL_BLU}" /:/_/:/  /  "${CL_RST}
-	@echo -e ${CL_RED}" \:\/:/  \/__/ "${CL_MAG}" \/\:\  \__ "${CL_CYN}" \:\  \ /:/  /"${CL_BLU}"  \:\/:/  / "${CL_RST}
-	@echo -e ${CL_RED}"  \::/__/     "${CL_MAG}"     \:\/\__\ "${CL_CYN}" \:\  /:/  /"${CL_BLU}"    \::/__/ "${CL_RST}
-	@echo -e ${CL_RED}"   \:\  \ "${CL_MAG}"          \::/  /"${CL_CYN}"   \:\/:/  /"${CL_BLU}"      \:\  \ "${CL_RST}
-	@echo -e ${CL_RED}"    \:\__\ "${CL_MAG}"         /:/  /"${CL_CYN}"     \::/  /"${CL_BLU}"        \:\__\ "${CL_RST}
-	@echo -e ${CL_RED}"     \/__/"${CL_MAG}"          \/__/"${CL_CYN}"       \/__/"${CL_BLU}"          \/__/"${CL_RST}
-	@echo -e ""
-	@echo -e ${CL_CYN}"===========-Package complete-==========="${CL_RST}
-	@echo -e ${CL_CYN}"zip: "${CL_MAG} $(AICP_TARGET_PACKAGE)${CL_RST}
-	@echo -e ${CL_CYN}"md5: "${CL_MAG}" `cat $(AICP_TARGET_PACKAGE).md5sum | cut -d ' ' -f 1`"${CL_RST}
-	@echo -e ${CL_CYN}"size:"${CL_MAG}" `ls -lah $(AICP_TARGET_PACKAGE) | cut -d ' ' -f 5`"${CL_RST}
-	@echo -e ${CL_CYN}"========================================"${CL_RST}
-	@echo -e ""
+ifneq ($(TARGET_CUSTOM_RELEASETOOL),)
+	@echo "Running releasetool"
+	$(hide) clear
+	$(hide) OTAPACKAGE=$(INTERNAL_OTA_PACKAGE_TARGET) $(TARGET_CUSTOM_RELEASETOOL)
+else
+	$(hide) clear
+	$(hide) ./vendor/plain/tools/squisher $(ROM_BUILDTYPE)
+endif
 
 bootzip: bootimage
 	$(BOOT_ZIP_FROM_IMAGE_SCRIPT) \
