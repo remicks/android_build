@@ -84,7 +84,7 @@ function check_product()
     # hide successful answers, but allow the errors to show
 }
 
-VARIANT_CHOICES=(user eng)
+VARIANT_CHOICES=(user userdebug eng)
 
 # check to see if the supplied variant is valid
 function check_variant()
@@ -554,7 +554,7 @@ echo "z$target" | grep -q "-"
         else
             # This is probably just the Plain model name
             if [ -z "$variant" ]; then
-                variant="user"
+                variant="userdebug"
             fi
             lunch plain_$target-$variant
         fi
