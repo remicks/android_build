@@ -1050,6 +1050,8 @@ endif
 
 # $(1): output file
 define build-systemimage-target
+  @echo "Generating Changelog since $(changelog_date)"
+  $(hide) ./vendor/plain/utils/changelog_gen.sh $(changelog_date)
   @echo "Target system fs image: $(1)"
   $(call create-system-vendor-symlink)
   @mkdir -p $(dir $(1)) $(systemimage_intermediates) && rm -rf $(systemimage_intermediates)/system_image_info.txt
