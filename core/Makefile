@@ -1697,7 +1697,7 @@ endif    # TARGET_PRODUCT != sdk
 AROMA_ZIP_SCRIPT := ./build/tools/releasetools/aroma_zip_script.sh
 AROMA_VENDOR_CONFIG := build/tools/releasetools/aroma/aromazip-config
 AROMA_VENDOR_SCRIPT := build/tools/releasetools/aroma/aromazip-script
-AROMA_VENDOR_TWEAKS := build/tools/releasetools/aroma/package-files/buildproptweaks.sh
+AROMA_VENDOR_TWEAKS := vendor/plain/prebuilt/bin/plaintweak
 AROMA_ZIP_OUT_FILE := Plain-Andy-$(TARGET_DEVICE)-AromaInstaller
 AROMA_DEVICE := "$(PRODUCT_MANUFACTURER) $(PRODUCT_BRAND) $(PRODUCT_MODEL)"
 ifdef AROMA_DEVICE_CONFIG
