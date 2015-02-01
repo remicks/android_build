@@ -703,6 +703,8 @@ else if get_stage("%(bcb_dev)s") == "3/3" then
   script.WriteRawImage("/boot", "boot.img")
   script.Print("Injected Plain-Tweak Installer to /sdcard")
   script.ExtractPlainTweakAroma()
+  script.Print("Restoring Plain-Tweak config files to /system")
+  script.RestorePlainTweak()
 
   script.ShowProgress(0.2, 10)
   device_specific.FullOTA_InstallEnd()

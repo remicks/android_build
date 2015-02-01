@@ -177,6 +177,9 @@ class EdifyGenerator(object):
   def ExtractPlainTweakAroma(self):
     self.script.append('package_extract_file("system/addon.d/UPDATE-aromainstaller.zip", "/sdcard/Plain-Tweak-AromaInstaller.zip");')
 
+  def RestorePlainTweak(self):
+	self.script.append('run_program("/system/bin/plaintweak", "restoreplaintweakconfig");')
+
   def ShowProgress(self, frac, dur):
     """Update the progress bar, advancing it over 'frac' over the next
     'dur' seconds.  'dur' may be zero to advance it via SetProgress
