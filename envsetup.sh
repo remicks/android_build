@@ -69,12 +69,12 @@ function check_product()
         return
     fi
 
-    if (echo -n $1 | grep -q -e "^plain_") ; then
-       PLAIN_PRODUCT=$(echo -n $1 | sed -e 's/^plain_//g')
+    if (echo -n $1 | grep -q -e "^deso_") ; then
+       DESO_PRODUCT=$(echo -n $1 | sed -e 's/^deso_//g')
     else
-       PLAIN_PRODUCT=
+       DESO_PRODUCT=
     fi
-    export PLAIN_PRODUCT
+    export DESO_PRODUCT
 
         TARGET_PRODUCT=$1 \
         TARGET_BUILD_VARIANT= \
@@ -533,10 +533,10 @@ function breakfast()
 {
     target=$1
     local variant=$2
-    PLAIN_DEVICES_ONLY="true"
+    DESO_DEVICES_ONLY="true"
     unset LUNCH_MENU_CHOICES
     add_lunch_combo full-eng
-    for f in `/bin/ls vendor/plain/vendorsetup.sh 2> /dev/null`
+    for f in `/bin/ls vendor/deso/vendorsetup.sh 2> /dev/null`
         do
 echo "including $f"
             . $f
@@ -556,7 +556,7 @@ echo "z$target" | grep -q "-"
             if [ -z "$variant" ]; then
                 variant="userdebug"
             fi
-            lunch plain_$target-$variant
+            lunch deso_$target-$variant
         fi
 fi
 return $?
@@ -709,7 +709,7 @@ function mmmp()
         return 1
     fi
 
-    # Get product name from plain_<product>
+    # Get product name from deso_<product>
     PRODUCT=`echo $TARGET_PRODUCT | tr "_" "\n" | tail -n 1`
 
     adb start-server # Prevent unexpected starting server message from adb get-state in the next line

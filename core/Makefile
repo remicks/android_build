@@ -17,7 +17,7 @@ endif
 LOCAL_PATH := $(BUILD_SYSTEM)
 
 # Pick a reasonable string to use to identify files.
-ifneq ($(PLAIN_PRODUCT),)
+ifneq ($(DESO_PRODUCT),)
 ifneq "" "$(filter eng.%,$(BUILD_NUMBER))"
   # BUILD_NUMBER has a timestamp in it, which means that
   # it will change every time.  Pick a stable value.
@@ -222,7 +222,7 @@ ifneq ($(PRODUCTS.$(INTERNAL_PRODUCT).PRODUCT_OEM_PROPERTIES),)
 endif
 	$(hide) TARGET_BUILD_TYPE="$(TARGET_BUILD_VARIANT)" \
 			TARGET_DEVICE="$(TARGET_VENDOR_DEVICE_NAME)" \
-			PLAIN_DEVICE="$(TARGET_DEVICE)" \
+			DESO_DEVICE="$(TARGET_DEVICE)" \
 			PRODUCT_NAME="$(TARGET_VENDOR_PRODUCT_NAME)" \
 			PRODUCT_BRAND="$(PRODUCT_BRAND)" \
 			PRODUCT_DEFAULT_LANGUAGE="$(call default-locale-language,$(PRODUCT_LOCALES))" \
@@ -1052,7 +1052,7 @@ endif
 define build-systemimage-target
   $(hide) $(aromazip)
   @echo "Generating Changelog since $(changelog_date)"
-  $(hide) ./vendor/plain/utils/changelog_gen.sh $(changelog_date)
+  $(hide) ./vendor/deso/utils/changelog_gen.sh $(changelog_date)
   @echo "Target system fs image: $(1)"
   $(call create-system-vendor-symlink)
   @mkdir -p $(dir $(1)) $(systemimage_intermediates) && rm -rf $(systemimage_intermediates)/system_image_info.txt
@@ -1630,12 +1630,12 @@ else
     OTA_FROM_TARGET_SCRIPT := $(TARGET_RELEASETOOL_OTA_FROM_TARGET_SCRIPT)
 endif
 
-PLAIN_TARGET_PACKAGE := $(PRODUCT_OUT)/$(PLAIN_VERSION).zip
+DESO_TARGET_PACKAGE := $(PRODUCT_OUT)/$(DESO_VERSION).zip
 
 BOOT_ZIP_FROM_IMAGE_SCRIPT := ./build/tools/releasetools/boot_flash_from_image
 KERNEL_PATH := $(TARGET_KERNEL_SOURCE)/arch/arm/configs/$(TARGET_KERNEL_CONFIG)
 
-ifneq ($(PLAIN_PRODUCT),)
+ifneq ($(DESO_PRODUCT),)
     $(INTERNAL_OTA_PACKAGE_TARGET): backuptool := true
 else
     $(INTERNAL_OTA_PACKAGE_TARGET): backuptool := false
@@ -1661,7 +1661,7 @@ $(INTERNAL_OTA_PACKAGE_TARGET): $(BUILT_TARGET_FILES_PACKAGE) $(DISTTOOLS)
 	$(hide) MKBOOTIMG=$(MKBOOTIMG) \
 	   CUSTOM_BOOTING_MK=$(BOARD_CUSTOM_BOOTIMG_MK) \
 	   $(OTA_FROM_TARGET_SCRIPT) -v \
-	   $(if $(PLAIN_PRODUCT), --block) \
+	   $(if $(DESO_PRODUCT), --block) \
 	   -p $(HOST_OUT) \
 	   -k $(KEY_CERT_PAIR) \
 	   $(if $(OEM_OTA_CONFIG), -o $(OEM_OTA_CONFIG)) \
@@ -1680,7 +1680,7 @@ ifneq ($(TARGET_CUSTOM_RELEASETOOL),)
 	$(hide) OTAPACKAGE=$(INTERNAL_OTA_PACKAGE_TARGET) $(TARGET_CUSTOM_RELEASETOOL)
 else
 	$(hide) clear
-	$(hide) ./vendor/plain/tools/squisher $(ROM_BUILDTYPE)
+	$(hide) ./vendor/deso/tools/squisher $(ROM_BUILDTYPE)
 endif
 
 bootzip: bootimage
@@ -1697,7 +1697,7 @@ endif    # TARGET_PRODUCT != sdk
 AROMA_ZIP_SCRIPT := ./build/tools/releasetools/aroma_zip_script.sh
 AROMA_VENDOR_CONFIG := build/tools/releasetools/aroma/aromazip-config
 AROMA_VENDOR_SCRIPT := build/tools/releasetools/aroma/aromazip-script
-AROMA_VENDOR_TWEAKS := vendor/plain/prebuilt/bin/plaintweak
+AROMA_VENDOR_TWEAKS := vendor/deso/prebuilt/bin/desotweak
 AROMA_ZIP_OUT_FILE := Plain-Andy-$(TARGET_DEVICE)-AromaInstaller
 AROMA_DEVICE := "$(PRODUCT_MANUFACTURER) $(PRODUCT_BRAND) $(PRODUCT_MODEL)"
 ifdef AROMA_DEVICE_CONFIG

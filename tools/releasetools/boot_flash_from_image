@@ -48,11 +48,11 @@ if path.exists(defconfig):
     prekernel_version = search('CONFIG_LOCALVERSION=.*\n', open(defconfig, 'r').read())
     if prekernel_version:
         kernel_version = sub(r'(CONFIG_LOCALVERSION=)|\"|\n|-', "", prekernel_version.group(0))
-        kernel_version = "%s-%s-kernel" % (kernel_version or "PLAIN", device)
+        kernel_version = "%s-%s-kernel" % (kernel_version or "DESO", device)
     else:
-        kernel_version = "Plain-Andy-%s-kernel" % device
+        kernel_version = "Desolation-%s-kernel" % device
 else:
-    kernel_version = "Plain-Andy-%s-kernel" % device
+    kernel_version = "Desolation-%s-kernel" % device
 
 updater = "%s/obj/EXECUTABLES/updater_intermediates/updater" % out
 signer = "%s/framework/signapk.jar" % environ['ANDROID_HOST_OUT']
