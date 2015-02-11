@@ -35,7 +35,7 @@ except ImportError:
 
 # Config
 # set this to the default remote to use in repo
-default_rem = "pl-devices"
+default_rem = "deso-device"
 # set this to the default revision to use (branch/tag name)
 default_rev = "lp"
 # set this to the remote that you use for projects from your team repos
@@ -44,7 +44,7 @@ default_team_rem = "gh"
 # this shouldn't change unless google makes changes
 local_manifest_dir = ".repo/local_manifests"
 # change this to your name on github (or equivalent hosting)
-android_team = "Plain-Devices"
+android_team = "DesolationRom-Devices"
 
 
 def check_repo_exists(git_data):
@@ -222,13 +222,13 @@ def parse_device_from_folder(device):
     elif len(search) == 1:
         location = search[0]
     else:
-        print("Your device was not found. Attempting to retrieve device repository from Plain-Andy Github..")
+        print("Your device was not found. Attempting to retrieve device repository from DesolationRom's Github..")
         location = parse_device_from_manifest(device)
     return location
 
 
 def parse_dependency_file(location):
-    dep_file = "plain.dependencies"
+    dep_file = "deso.dependencies"
     dep_location = '/'.join([location, dep_file])
     if not os.path.isfile(dep_location):
         print("WARNING: %s file not found" % dep_location)
